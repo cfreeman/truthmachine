@@ -18,6 +18,28 @@
  */
 #include <Arduino.h>
 
+typedef struct Smoothed_struct {
+  const int numValues = 10;
+  int values[numValues];
+  int valueIdx;
+  int valueSum;
+
+  int smoothed_value;
+} smoothed_values;
+
+smoothed_values init(int size) {
+ smoothed_values result;
+
+ result.values = { 0 };
+
+ return result;
+}
+
+/*
+int add_value(smoothed_values *sv, int v) {
+}
+*/
+
 const int numReadings = 10;
 int readings[numReadings];
 int readIndex = 0;
