@@ -1,0 +1,6 @@
+.pioenvs
+.piolibdeps
+.clang_complete
+.gcc-flags.json
+lib/OSC
+lib/SparkFun_ADXL345_Arduino_Library
