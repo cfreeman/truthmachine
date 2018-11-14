@@ -19,31 +19,26 @@
 #include <Arduino.h>
 
 typedef struct Smoothed_struct {
-  const int numValues = 10;
-  int values[numValues];
-  int valueIdx;
-  int valueSum;
+  static const int numValues = 10;
+  int values[numValues] = { 0 };
+  int Idx = 0;
+  int sum = 0;
 
-  int smoothed_value;
+  int smoothed_value = 0;
 } smoothed_values;
 
-smoothed_values init(int size) {
- smoothed_values result;
+void add_value(smoothed_values *sv, int v) {
+  sv->sum = sv->sum - sv->values[sv->Idx] + v;
 
- result.values = { 0 };
+  sv->values[sv->Idx] = v;
+  sv->Idx = (sv->Idx + 1) % sv->numValues;
 
- return result;
+  sv->smoothed_value = sv->sum / sv->numValues;
 }
 
-/*
-int add_value(smoothed_values *sv, int v) {
-}
-*/
 
-const int numReadings = 10;
-int readings[numReadings];
-int readIndex = 0;
-//int total = 0;
+
+smoothed_values rr_sensor;
 
 // setup configures the underlying hardware for use in the main loop.
 void setup() {
@@ -52,15 +47,9 @@ void setup() {
 
 // loop executes over and over on the microcontroller.
 void loop() {
-  readings[readIndex] = analogRead(4);
-  readIndex = (readIndex + 1) % numReadings;
+  add_value(&rr_sensor, analogRead(4));
 
-  int sum = 0;
-  for (int i = 0; i < numReadings; i++) {
-    sum += readings[i];
-  }
+  Serial.println(rr_sensor.smoothed_value);
 
-  Serial.println(sum/numReadings);
-
-  delay(50);
+  delay(100);
 }
