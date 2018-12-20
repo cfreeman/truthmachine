@@ -16,21 +16,23 @@
  * DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
-#ifndef _SMOOTHED_STRUCT_C_ACH_
-#define _SMOOTHED_STRUCT_C_ACH_
+#ifndef _LIE_STATE_C_ACH_
+#define _LIE_STATE_C_ACH_
 
-typedef struct Smoothed_struct {
-  int maxValues;
-  int numValues;
-  int *values;
-  int idx;
-  int sum;
+typedef struct LieStateStruct (*LieModeFn)(struct LieStateStruct current_state,
+                                    	   int chest_pos,
+                                           unsigned long current_time);
 
-  int smoothed_value;
-} SmoothedValues;
+typedef struct LieStateStruct {
 
-SmoothedValues* new_smoothed(int size);
-void free_smoothed(SmoothedValues *sv);
-void add_value(SmoothedValues *sv, int v);
+  // Array of heart rate results logged at half second intervals.
+  // Array of GSR results logged at half second intervals.
+  // Array of RR results logged at half second intervals.
+
+  float lieLikelyHood;
+  unsigned long stateStart;
+
+  LieModeFn updateRR;
+} RRState;
 
 #endif

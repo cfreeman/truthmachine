@@ -19,30 +19,59 @@
 #include <Arduino.h>
 #include <Wire.h>
 
+#include <Bridge.h>
+#include <BridgeServer.h>
+#include <BridgeClient.h>
+
 #include "SmoothedStruct.h"
 #include "RRState.h"
 
 // TODO: Tidy up the RRState machine and stop counting false positives.
 
+
+BridgeServer server;
+
 RRState rr_state;
 SmoothedValues *rr_sensor;
 SmoothedValues *gsr_sensor;
+int heartRate;
 //SmoothedValues hr_sensor;
 
 // setup configures the underlying hardware for use in the main loop.
 void setup() {
-  delay(5000);
+  delay(1000);
+  
+  
   Serial.begin(9600);
+  Serial.println("Booting...");
+
+  Bridge.begin();
+  server.listenOnLocalhost();
+  server.begin();
+  
+  Wire.begin();
+  
 
   rr_sensor = new_smoothed(10);   // Exists till hard recycle.
   gsr_sensor = new_smoothed(10);  // Exists till hard recycle.
+
+  heartRate = 0;
 
   add_value(gsr_sensor, analogRead(A0));
   add_value(rr_sensor, analogRead(A1));
 
   rr_state = {gsr_sensor->smoothed_value, millis(), rr_sensor, 0, &BreatheOut};
 
-  Wire.begin();
+  Serial.println("***Booted");
+}
+
+bool measure_interrogation(BridgeClient client) {
+  // ADDRESSS: 192.168.0.6/arduino/drain/0.55
+
+  String command = client.readStringUntil('/');
+  command.trim();
+
+  return (command == "interrogate");
 }
 
 // loop executes over and over on the microcontroller.
@@ -50,21 +79,21 @@ void loop() {
   // Get the latest data from the Respiration Rate and Galvanic Skin Response Sensors.
   add_value(gsr_sensor, analogRead(A0));
   add_value(rr_sensor, analogRead(A1));
-  rr_state = rr_state.updateRR(rr_state, rr_sensor->smoothed_value, millis());
-
-  // Serial.println(gsr_sensor->smoothed_value);
-  // Serial.println(rr_sensor->smoothed_value);
-  // Serial.println("***");
+  rr_state = rr_state.updateRR(rr_state, rr_sensor->smoothed_value, millis());                                       
 
   // Get the latest data from the Heart Rate Sensor.
-  // Wire.requestFrom(0xA0 >> 1, 1);
-  // while(Wire.available()) {
-  //   unsigned char c = Wire.read();
-  //   Serial.println(c, DEC);
-  // }
+  Wire.requestFrom(0xA0 >> 1, 1);
+  while(Wire.available()) {
+    heartRate = (int) Wire.read();
+    Serial.println(heartRate);
+  }
 
-  // delay(500);
+  BridgeClient client = server.accept();
+  if (client) {
+    // Trigger lie measurement.
+    measure_interrogation(client);
+    client.stop();
+  }
 
-  
-  delay(25);
+  delay(500);
 }
