@@ -26,7 +26,16 @@
 #include "SmoothedStruct.h"
 #include "RRState.h"
 
-// TODO: Tidy up the RRState machine and stop counting false positives.
+/**
+
+TODO:
+ * Tidy up the RRState machine and stop counting false positives.
+ * Add the ability to calibrate and set baseline responses.
+ * Finish up mechanics for sending and recieving data.
+ * Calculate lie likelyhood.
+ * Implement other broadcast information.
+*/ 
+
 
 
 BridgeServer server;

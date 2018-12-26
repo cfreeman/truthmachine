@@ -33,39 +33,39 @@ typedef struct LieStateStruct {
 
   int rr_delta_t[LOG_LENGTH];
   int hr_delta_t[LOG_LENGTH];
-  int gsr_delta_t[LOG_LENGTH];
+  int gs_delta_t[LOG_LENGTH];
 
   unsigned long stateStart;   // The time in milliseconds when the current updateRR mode started.
 
   LieModeFn updateRR;
-} RRState;
+} LieState;
 
-LieStateStruct idle(LieStateStruct current_state,
-                    bool interrogated,
-                    int respiratory_rate,
-                    int heart_rate,
-                    int galvanic_skin_response,
-                    unsigned long current_time);
+LieState idle(LieState current_state,
+              bool interrogated,
+              int respiratory_rate,
+              int heart_rate,
+              int galvanic_skin_response,
+              unsigned long current_time);
 
-LieStateStruct measure(LieStateStruct current_state,
-                       bool interrogated,
-                       int respiratory_rate,
-                       int heart_rate,
-                       int galvanic_skin_response,
-                       unsigned long current_time);
+LieState measure(LieState current_state,
+                 bool interrogated,
+                 int respiratory_rate,
+                 int heart_rate,
+                 int galvanic_skin_response,
+                 unsigned long current_time);
 
-LieStateStruct log(LieStateStruct current_state,
-                   bool interrogated,
-                   int respiratory_rate,
-                   int heart_rate,
-                   int galvanic_skin_response,
-                   unsigned long current_time);
+LieState log(LieState current_state,
+             bool interrogated,
+             int respiratory_rate,
+             int heart_rate,
+             int galvanic_skin_response,
+             unsigned long current_time);
 
-LieStateStruct report(LieStateStruct current_state,
-                      bool interrogated,
-                      int respiratory_rate,
-                      int heart_rate,
-                      int galvanic_skin_response,
-                      unsigned long current_time);
+LieState report(LieState current_state,
+                bool interrogated,
+                int respiratory_rate,
+                int heart_rate,
+                int galvanic_skin_response,
+                unsigned long current_time);
 
 #endif

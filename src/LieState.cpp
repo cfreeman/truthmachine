@@ -17,39 +17,82 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 #include "LieState.h"
+#include <Arduino.h>
 
-LieStateStruct idle(LieStateStruct current_state,
-                    bool interrogated,
-                    int respiratory_rate,
-                    int heart_rate,
-                    int galvanic_skin_response,
-                    unsigned long current_time) {
+LieState idle(LieState current_state,
+              bool interrogated,
+              int respiratory_rate,
+              int heart_rate,
+              int galvanic_skin_response,
+              unsigned long current_time) {
+  if (interrogated) {
+    return LieState{{0}, {0}, {0}, current_time, &measure};
+  }
+
   return current_state;
 }
 
-LieStateStruct measure(LieStateStruct current_state,
-                       bool interrogated,
-                       int respiratory_rate,
-                       int heart_rate,
-                       int galvanic_skin_response,
-                       unsigned long current_time) {
+LieState measure(LieState current_state,
+                 bool interrogated,
+                 int respiratory_rate,
+                 int heart_rate,
+                 int galvanic_skin_response,
+                 unsigned long current_time) {
+
+  if (current_time > (current_state.stateStart + (MEASURE_DURATION / LOG_LENGTH))) {
+    LieState newLieState = {{0}, {0}, {0}, current_time, &log};
+    for (uint8_t i = 0; i < LOG_LENGTH; i++) {
+      newLieState.rr_delta_t[i] = current_state.rr_delta_t[i];
+      newLieState.hr_delta_t[i] = current_state.hr_delta_t[i];
+      newLieState.gs_delta_t[i] = current_state.gs_delta_t[i];
+    }
+
+    return newLieState;
+  }
+
   return current_state;
 }
 
-LieStateStruct log(LieStateStruct current_state,
-                   bool interrogated,
-                   int respiratory_rate,
-                   int heart_rate,
-                   int galvanic_skin_response,
-                   unsigned long current_time) {
-  return current_state;
+LieState log(LieState current_state,
+             bool interrogated,
+             int respiratory_rate,
+             int heart_rate,
+             int galvanic_skin_response,
+             unsigned long current_time) {
+
+  LieState newLieState = {{0}, {0}, {0}, current_time, &measure};
+  for (uint8_t i = 0; i < LOG_LENGTH; i++) {
+      newLieState.rr_delta_t[i] = current_state.rr_delta_t[i];
+      newLieState.hr_delta_t[i] = current_state.hr_delta_t[i];
+      newLieState.gs_delta_t[i] = current_state.gs_delta_t[i];
+    }
+
+  uint8_t i = LOG_LENGTH * (uint8_t)((current_time - current_state.stateStart) / (float) MEASURE_DURATION);
+  // TODO: Need to make sure we are not longer then logLENGTH. (min)
+  newLieState.rr_delta_t[i] = respiratory_rate;
+  newLieState.hr_delta_t[i] = heart_rate;
+  newLieState.gs_delta_t[i] = galvanic_skin_response;
+  newLieState.updateRR = &measure;
+
+  // If we have filled our delta_t logs, switch to report mode.
+  if (current_time >= (current_state.stateStart + MEASURE_DURATION)) {
+    newLieState.updateRR = &report;
+  }
+
+  return newLieState;
 }
 
-LieStateStruct report(LieStateStruct current_state,
-                      bool interrogated,
-                      int respiratory_rate,
-                      int heart_rate,
-                      int galvanic_skin_response,
-                      unsigned long current_time) {
+LieState report(LieState current_state,
+                bool interrogated,
+                int respiratory_rate,
+                int heart_rate,
+                int galvanic_skin_response,
+                unsigned long current_time) {
+
+  // Calculate lie likelyhood
+  // Push data to Audio visual machine.
+
+  // drop back into the idle state.
+
   return current_state;
 }
