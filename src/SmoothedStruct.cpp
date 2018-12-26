@@ -20,21 +20,21 @@
 #include "SmoothedStruct.h"
 
 SmoothedValues* new_smoothed(int size) {
-	SmoothedValues* result = (SmoothedValues*) calloc(1, sizeof(SmoothedValues));
+  SmoothedValues* result = (SmoothedValues*) calloc(1, sizeof(SmoothedValues));
 
-	result->maxValues = size;
-	result->numValues = 0;
-	result->values = (int*) calloc(size, sizeof(int));
-	result->idx = 0;
-	result->sum = 0;
-	result->smoothed_value = 0;
+  result->maxValues = size;
+  result->numValues = 0;
+  result->values = (int*) calloc(size, sizeof(int));
+  result->idx = 0;
+  result->sum = 0;
+  result->smoothed_value = 0;
 
-	return result;
+  return result;
 }
 
 void free_smoothed(SmoothedValues *sv) {
-	free(sv->values);
-	free(sv);
+  free(sv->values);
+  free(sv);
 }
 
 void add_value(SmoothedValues *sv, int v) {

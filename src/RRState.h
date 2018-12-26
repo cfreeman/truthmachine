@@ -28,10 +28,10 @@ typedef struct RRStateStruct (*RRModeFn)(struct RRStateStruct current_state,
                                          unsigned long current_time);
 
 typedef struct RRStateStruct {
-  int last_chest_pos;		// The last maxima or minima chest position.
-  unsigned long last_t; 	// The last time we reached a max chest position.
-  SmoothedValues *breaths;	// Bucket of the last ten breaths.
-  int bpm;                	// Current respiratory rate in breaths per minute.
+  int last_chest_pos;       // The last maxima or minima chest position.
+  unsigned long last_t;     // The last time we reached a max chest position.
+  SmoothedValues *breaths;  // Bucket of the last ten breaths.
+  int bpm;                  // Current respiratory rate in breaths per minute.
 
   RRModeFn updateRR;
 } RRState;

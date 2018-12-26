@@ -17,3 +17,39 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 #include "LieState.h"
+
+LieStateStruct idle(LieStateStruct current_state,
+                    bool interrogated,
+                    int respiratory_rate,
+                    int heart_rate,
+                    int galvanic_skin_response,
+                    unsigned long current_time) {
+  return current_state;
+}
+
+LieStateStruct measure(LieStateStruct current_state,
+                       bool interrogated,
+                       int respiratory_rate,
+                       int heart_rate,
+                       int galvanic_skin_response,
+                       unsigned long current_time) {
+  return current_state;
+}
+
+LieStateStruct log(LieStateStruct current_state,
+                   bool interrogated,
+                   int respiratory_rate,
+                   int heart_rate,
+                   int galvanic_skin_response,
+                   unsigned long current_time) {
+  return current_state;
+}
+
+LieStateStruct report(LieStateStruct current_state,
+                      bool interrogated,
+                      int respiratory_rate,
+                      int heart_rate,
+                      int galvanic_skin_response,
+                      unsigned long current_time) {
+  return current_state;
+}

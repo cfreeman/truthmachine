@@ -65,6 +65,31 @@ void setup() {
   Serial.println("***Booted");
 }
 
+
+
+// Transmits:
+// /lielikelyhood - A normalised value between 0.0 and 1.0 for how stressed / more likely a person is to be lying. (triggered by an /interrogate message).
+
+// /hr - an integer value that is the current heart rate of the participant in beats per minute
+// /rr - an integer value that is the current respiratory rate of the participant in breaths per minute.
+// /gsr - a floating point value that is the current electrodermal activity in microsiemens. 
+
+// /pulse - a message that is sent 'n' times a minute where n is the current heart rate in beats per minute. 
+void transmit() {
+  
+  // Spin up a curl process on the atheros processor running linino.
+  Process p;
+  p.begin("curl");
+
+  // Add the argument to the end of the URL.
+  //dtostrf(current_dispenser_level, 5, 5, &url_buffer[29]);
+  //Serial.println(url_buffer);
+  //p.addParameter(url_buffer); // Add the URL parameter to "curl"
+  p.run();
+}
+
+// Recieves:
+// /interrogate - When the sensor receives this message it monitors the biometric sensors for ten seconds (configurable) and calculates the lie likely hood. When completed the sensor transmits a /lielikelyhood message back.
 bool measure_interrogation(BridgeClient client) {
   // ADDRESSS: 192.168.0.6/arduino/drain/0.55
 

@@ -19,20 +19,53 @@
 #ifndef _LIE_STATE_C_ACH_
 #define _LIE_STATE_C_ACH_
 
+#define MEASURE_DURATION 5000   // The duration of the lie detection process. 
+#define LOG_LENGTH 10           // The number of datapoints to collect for calculating lie likelyhood
+
 typedef struct LieStateStruct (*LieModeFn)(struct LieStateStruct current_state,
-                                    	   int chest_pos,
+                                           bool interrogated,
+                                           int respiratory_rate,
+                                           int heart_rate,
+                                           int galvanic_skin_response,
                                            unsigned long current_time);
 
 typedef struct LieStateStruct {
 
-  // Array of heart rate results logged at half second intervals.
-  // Array of GSR results logged at half second intervals.
-  // Array of RR results logged at half second intervals.
+  int rr_delta_t[LOG_LENGTH];
+  int hr_delta_t[LOG_LENGTH];
+  int gsr_delta_t[LOG_LENGTH];
 
-  float lieLikelyHood;
-  unsigned long stateStart;
+  unsigned long stateStart;   // The time in milliseconds when the current updateRR mode started.
 
   LieModeFn updateRR;
 } RRState;
+
+LieStateStruct idle(LieStateStruct current_state,
+                    bool interrogated,
+                    int respiratory_rate,
+                    int heart_rate,
+                    int galvanic_skin_response,
+                    unsigned long current_time);
+
+LieStateStruct measure(LieStateStruct current_state,
+                       bool interrogated,
+                       int respiratory_rate,
+                       int heart_rate,
+                       int galvanic_skin_response,
+                       unsigned long current_time);
+
+LieStateStruct log(LieStateStruct current_state,
+                   bool interrogated,
+                   int respiratory_rate,
+                   int heart_rate,
+                   int galvanic_skin_response,
+                   unsigned long current_time);
+
+LieStateStruct report(LieStateStruct current_state,
+                      bool interrogated,
+                      int respiratory_rate,
+                      int heart_rate,
+                      int galvanic_skin_response,
+                      unsigned long current_time);
 
 #endif
