@@ -30,6 +30,7 @@
 /**
 
 TODO:
+
  * Tidy up the RRState machine and stop counting false positives.
  * Add the ability to calibrate and set baseline responses.
  * Calculate lie likelyhood.
@@ -117,12 +118,9 @@ void loop() {
     lastBeat = t;
   }
 
-  Serial.println(t);
-
-
+  // Update the lie state.
   char c = get_command();
 
-  // Update the lie state.
 
 
   delay(100);

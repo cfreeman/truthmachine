@@ -84,6 +84,24 @@ LieState log(LieState current_state,
   return newLieState;
 }
 
+float gradient(int dataSet[LOG_LENGTH]) {
+  int sumX = 0;
+  int sumY = 0;
+  int sumXY = 0;
+  int sumXX = 0;
+  int sumYY = 0;
+
+  for (int i = 0; i < LOG_LENGTH; i++) {
+    sumX = sumX + i;
+    sumY = sumY + dataSet[i];
+    sumXY = sumXY + (i * dataSet[i]);
+    sumXX = sumXX + (i * i);
+    sumYY = sumYY + (dataSet[i] * dataSet[i]);
+  }
+
+  return ((LOG_LENGTH * sumXY) - (sumX * sumY)) / (float)((LOG_LENGTH * sumXX) - (sumXX * sumXX));
+}
+
 LieState report(LieState current_state,
                 char command,
                 int respiratory_rate,
@@ -92,6 +110,18 @@ LieState report(LieState current_state,
                 unsigned long current_time) {
 
   // Calculate lie likelyhood
+  float trendR = gradient(current_state.rr_delta_t);
+  float trendH = gradient(current_state.hr_delta_t);
+  float trendG = gradient(current_state.gs_delta_t);
+
+  Serial.print("Trend R:");
+  Serial.println(trendR);
+  Serial.print("Trend H:");
+  Serial.println(trendH);
+  Serial.print("Trend G:");
+  Serial.println(trendG);
+
+  float lieLikelyhood = trendR + trendH + (2 * trendG);
 
   transmit('h', heart_rate);
   transmit('r', respiratory_rate);
