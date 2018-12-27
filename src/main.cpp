@@ -34,9 +34,8 @@ TODO:
  * Finish up mechanics for sending and recieving data.
  * Calculate lie likelyhood.
  * Implement other broadcast information.
-*/ 
 
-
+*/
 
 BridgeServer server;
 
@@ -44,22 +43,21 @@ RRState rr_state;
 SmoothedValues *rr_sensor;
 SmoothedValues *gsr_sensor;
 int heartRate;
-//SmoothedValues hr_sensor;
 
 // setup configures the underlying hardware for use in the main loop.
 void setup() {
   delay(1000);
-  
-  
+
+
   Serial.begin(9600);
   Serial.println("Booting...");
 
   Bridge.begin();
   server.listenOnLocalhost();
   server.begin();
-  
+
   Wire.begin();
-  
+
 
   rr_sensor = new_smoothed(10);   // Exists till hard recycle.
   gsr_sensor = new_smoothed(10);  // Exists till hard recycle.
@@ -74,38 +72,27 @@ void setup() {
   Serial.println("***Booted");
 }
 
-
-
-// Transmits:
-// /lielikelyhood - A normalised value between 0.0 and 1.0 for how stressed / more likely a person is to be lying. (triggered by an /interrogate message).
-
-// /hr - an integer value that is the current heart rate of the participant in beats per minute
-// /rr - an integer value that is the current respiratory rate of the participant in breaths per minute.
-// /gsr - a floating point value that is the current electrodermal activity in microsiemens. 
-
-// /pulse - a message that is sent 'n' times a minute where n is the current heart rate in beats per minute. 
-void transmit() {
-  
-  // Spin up a curl process on the atheros processor running linino.
-  Process p;
-  p.begin("curl");
-
-  // Add the argument to the end of the URL.
-  //dtostrf(current_dispenser_level, 5, 5, &url_buffer[29]);
-  //Serial.println(url_buffer);
-  //p.addParameter(url_buffer); // Add the URL parameter to "curl"
-  p.run();
-}
-
 // Recieves:
 // /interrogate - When the sensor receives this message it monitors the biometric sensors for ten seconds (configurable) and calculates the lie likely hood. When completed the sensor transmits a /lielikelyhood message back.
-bool measure_interrogation(BridgeClient client) {
+char get_command() {
   // ADDRESSS: 192.168.0.6/arduino/drain/0.55
 
+  BridgeClient client = server.accept();
+  if (!client) {
+    return '.';
+  }
+
   String command = client.readStringUntil('/');
+  client.stop();
   command.trim();
 
-  return (command == "interrogate");
+  if (command == "interrogate") {
+    return 'i';
+  } else if (command == "calibrate") {
+    return 'c';
+  }
+
+  return '.';
 }
 
 // loop executes over and over on the microcontroller.
@@ -113,7 +100,7 @@ void loop() {
   // Get the latest data from the Respiration Rate and Galvanic Skin Response Sensors.
   add_value(gsr_sensor, analogRead(A0));
   add_value(rr_sensor, analogRead(A1));
-  rr_state = rr_state.updateRR(rr_state, rr_sensor->smoothed_value, millis());                                       
+  rr_state = rr_state.updateRR(rr_state, rr_sensor->smoothed_value, millis());
 
   // Get the latest data from the Heart Rate Sensor.
   Wire.requestFrom(0xA0 >> 1, 1);
@@ -122,12 +109,10 @@ void loop() {
     Serial.println(heartRate);
   }
 
-  BridgeClient client = server.accept();
-  if (client) {
-    // Trigger lie measurement.
-    measure_interrogation(client);
-    client.stop();
-  }
+  get_command();
+
+  // Update the lie state.
+
 
   delay(500);
 }

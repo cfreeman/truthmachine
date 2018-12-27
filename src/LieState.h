@@ -23,7 +23,7 @@
 #define LOG_LENGTH 10           // The number of datapoints to collect for calculating lie likelyhood
 
 typedef struct LieStateStruct (*LieModeFn)(struct LieStateStruct current_state,
-                                           bool interrogated,
+                                           char command,
                                            int respiratory_rate,
                                            int heart_rate,
                                            int galvanic_skin_response,
@@ -41,31 +41,33 @@ typedef struct LieStateStruct {
 } LieState;
 
 LieState idle(LieState current_state,
-              bool interrogated,
+              char command,
               int respiratory_rate,
               int heart_rate,
               int galvanic_skin_response,
               unsigned long current_time);
 
 LieState measure(LieState current_state,
-                 bool interrogated,
+                 char command,
                  int respiratory_rate,
                  int heart_rate,
                  int galvanic_skin_response,
                  unsigned long current_time);
 
 LieState log(LieState current_state,
-             bool interrogated,
+             char command,
              int respiratory_rate,
              int heart_rate,
              int galvanic_skin_response,
              unsigned long current_time);
 
 LieState report(LieState current_state,
-                bool interrogated,
+                char command,
                 int respiratory_rate,
                 int heart_rate,
                 int galvanic_skin_response,
                 unsigned long current_time);
+
+
 
 #endif

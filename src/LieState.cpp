@@ -16,16 +16,17 @@
  * DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
-#include "LieState.h"
 #include <Arduino.h>
+#include "LieState.h"
+#include "Transmit.h"
 
 LieState idle(LieState current_state,
-              bool interrogated,
+              char command,
               int respiratory_rate,
               int heart_rate,
               int galvanic_skin_response,
               unsigned long current_time) {
-  if (interrogated) {
+  if (command == 'i') {
     return LieState{{0}, {0}, {0}, current_time, &measure};
   }
 
@@ -33,7 +34,7 @@ LieState idle(LieState current_state,
 }
 
 LieState measure(LieState current_state,
-                 bool interrogated,
+                 char command,
                  int respiratory_rate,
                  int heart_rate,
                  int galvanic_skin_response,
@@ -54,7 +55,7 @@ LieState measure(LieState current_state,
 }
 
 LieState log(LieState current_state,
-             bool interrogated,
+             char command,
              int respiratory_rate,
              int heart_rate,
              int galvanic_skin_response,
@@ -68,7 +69,8 @@ LieState log(LieState current_state,
     }
 
   uint8_t i = LOG_LENGTH * (uint8_t)((current_time - current_state.stateStart) / (float) MEASURE_DURATION);
-  // TODO: Need to make sure we are not longer then logLENGTH. (min)
+  i = min(LOG_LENGTH, i);
+
   newLieState.rr_delta_t[i] = respiratory_rate;
   newLieState.hr_delta_t[i] = heart_rate;
   newLieState.gs_delta_t[i] = galvanic_skin_response;
@@ -83,16 +85,17 @@ LieState log(LieState current_state,
 }
 
 LieState report(LieState current_state,
-                bool interrogated,
+                char command,
                 int respiratory_rate,
                 int heart_rate,
                 int galvanic_skin_response,
                 unsigned long current_time) {
 
   // Calculate lie likelyhood
-  // Push data to Audio visual machine.
 
-  // drop back into the idle state.
+  transmit('h', heart_rate);
+  transmit('r', respiratory_rate);
+  transmit('g', galvanic_skin_response);
 
-  return current_state;
+  return LieState {{0}, {0}, {0}, current_time, &idle};
 }
