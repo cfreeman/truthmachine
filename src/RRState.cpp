@@ -31,24 +31,24 @@ RRState BreatheIn(RRState current_state,
   }
 
   // have reached our chest peek, count the breath.
-  Serial.print("Breath cp: ");
-  Serial.print(chest_pos);
-  Serial.print(" lcp:");
-  Serial.print(current_state.last_chest_pos);
-  Serial.print(" ncp:");
-  Serial.print(new_cp);
-  Serial.print(" dlcp:");
-  Serial.println(delta_cp);
+  // Serial.print("Breath cp: ");
+  // Serial.print(chest_pos);
+  // Serial.print(" lcp:");
+  // Serial.print(current_state.last_chest_pos);
+  // Serial.print(" ncp:");
+  // Serial.print(new_cp);
+  // Serial.print(" dlcp:");
+  // Serial.println(delta_cp);
 
-  Serial.print("BT: ");
-  Serial.println(current_time - current_state.last_t);
+  // Serial.print("BT: ");
+  // Serial.println(current_time - current_state.last_t);
 
   add_value(current_state.breaths, (int)(current_time - current_state.last_t));
   current_state.bpm = 60000 / current_state.breaths->smoothed_value;
 
-  Serial.print("****");
-  Serial.print(current_state.bpm);
-  Serial.println("BPM");
+//  Serial.print("****");
+  // Serial.print(current_state.bpm);
+  // Serial.println("BPM");
 
   return {new_cp, current_time, current_state.breaths, current_state.bpm, &BreatheOut};
 }

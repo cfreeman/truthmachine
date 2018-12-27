@@ -23,17 +23,16 @@
 #include <BridgeServer.h>
 #include <BridgeClient.h>
 
-#include "SmoothedStruct.h"
 #include "RRState.h"
+#include "SmoothedStruct.h"
+#include "Transmit.h"
 
 /**
 
 TODO:
  * Tidy up the RRState machine and stop counting false positives.
  * Add the ability to calibrate and set baseline responses.
- * Finish up mechanics for sending and recieving data.
  * Calculate lie likelyhood.
- * Implement other broadcast information.
 
 */
 
@@ -43,14 +42,12 @@ RRState rr_state;
 SmoothedValues *rr_sensor;
 SmoothedValues *gsr_sensor;
 int heartRate;
+unsigned long lastBeat;
 
 // setup configures the underlying hardware for use in the main loop.
 void setup() {
-  delay(1000);
-
-
   Serial.begin(9600);
-  Serial.println("Booting...");
+  Serial.print("Booting ... ");
 
   Bridge.begin();
   server.listenOnLocalhost();
@@ -63,19 +60,21 @@ void setup() {
   gsr_sensor = new_smoothed(10);  // Exists till hard recycle.
 
   heartRate = 0;
+  lastBeat = 0;
 
   add_value(gsr_sensor, analogRead(A0));
   add_value(rr_sensor, analogRead(A1));
 
   rr_state = {gsr_sensor->smoothed_value, millis(), rr_sensor, 0, &BreatheOut};
 
-  Serial.println("***Booted");
+  Serial.println("Done");
 }
 
 // Recieves:
 // /interrogate - When the sensor receives this message it monitors the biometric sensors for ten seconds (configurable) and calculates the lie likely hood. When completed the sensor transmits a /lielikelyhood message back.
 char get_command() {
-  // ADDRESSS: 192.168.0.6/arduino/drain/0.55
+  // ADDRESSES: 192.168.0.6/arduino/interrogate
+  //            192.168.0.6/arduino/calibrate
 
   BridgeClient client = server.accept();
   if (!client) {
@@ -97,22 +96,34 @@ char get_command() {
 
 // loop executes over and over on the microcontroller.
 void loop() {
+  unsigned long t = millis();
+
   // Get the latest data from the Respiration Rate and Galvanic Skin Response Sensors.
   add_value(gsr_sensor, analogRead(A0));
   add_value(rr_sensor, analogRead(A1));
-  rr_state = rr_state.updateRR(rr_state, rr_sensor->smoothed_value, millis());
+  // rr_state = rr_state.updateRR(rr_state, rr_sensor->smoothed_value, t);
 
   // Get the latest data from the Heart Rate Sensor.
   Wire.requestFrom(0xA0 >> 1, 1);
   while(Wire.available()) {
     heartRate = (int) Wire.read();
-    Serial.println(heartRate);
   }
 
-  get_command();
+  // Transmit a pulse message to the server at the same rate that the participants
+  // heart rate is beating.
+  unsigned long deltaP = (unsigned long)(heartRate / 0.06);
+  if (t > (lastBeat + deltaP)) {
+    transmit('p', 0.0);
+    lastBeat = t;
+  }
+
+  Serial.println(t);
+
+
+  char c = get_command();
 
   // Update the lie state.
 
 
-  delay(500);
+  delay(100);
 }
