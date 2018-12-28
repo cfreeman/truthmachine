@@ -121,11 +121,15 @@ LieState report(LieState current_state,
   Serial.print("Trend G:");
   Serial.println(trendG);
 
-  float lieLikelyhood = trendR + trendH + (2 * trendG);
+  float lie_likely_hood = trendR + trendH + (2 * trendG);
+
+  Serial.print("Like Likelyhood: ");
+  Serial.println(lie_likely_hood);
 
   transmit('h', heart_rate);
   transmit('r', respiratory_rate);
   transmit('g', galvanic_skin_response);
+  transmit('l', lie_likely_hood);
 
   return LieState {{0}, {0}, {0}, current_time, &idle};
 }

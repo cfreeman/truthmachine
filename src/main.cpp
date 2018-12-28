@@ -31,7 +31,7 @@
 
 TODO:
 
- * Tidy up the RRState machine and stop counting false positives.
+ * Workout why the breaths per minute measure occasionally dips to negative.
  * Add the ability to calibrate and set baseline responses.
  * Calculate lie likelyhood.
 
@@ -42,6 +42,8 @@ BridgeServer server;
 RRState rr_state;
 SmoothedValues *rr_sensor;
 SmoothedValues *gsr_sensor;
+SmoothedValues *delta_t_breaths;
+
 int heartRate;
 unsigned long lastBeat;
 
@@ -57,8 +59,9 @@ void setup() {
   Wire.begin();
 
 
-  rr_sensor = new_smoothed(10);   // Exists till hard recycle.
-  gsr_sensor = new_smoothed(10);  // Exists till hard recycle.
+  rr_sensor = new_smoothed(10);       // Exists till hard recycle.
+  gsr_sensor = new_smoothed(10);      // Exists till hard recycle.
+  delta_t_breaths = new_smoothed(10); // Exists till hard recycle.
 
   heartRate = 0;
   lastBeat = 0;
@@ -66,7 +69,7 @@ void setup() {
   add_value(gsr_sensor, analogRead(A0));
   add_value(rr_sensor, analogRead(A1));
 
-  rr_state = {gsr_sensor->smoothed_value, millis(), rr_sensor, 0, &BreatheOut};
+  rr_state = {rr_sensor->smoothed_value, millis(), delta_t_breaths, 0, &Initial};
 
   Serial.println("Done");
 }
@@ -100,10 +103,11 @@ void loop() {
   unsigned long t = millis();
 
   // Get the latest data from the Respiration Rate and Galvanic Skin Response Sensors.
-  add_value(gsr_sensor, analogRead(A0));
+  //add_value(gsr_sensor, analogRead(A0));
   add_value(rr_sensor, analogRead(A1));
-  // rr_state = rr_state.updateRR(rr_state, rr_sensor->smoothed_value, t);
+  rr_state = rr_state.updateRR(rr_state, rr_sensor->smoothed_value, t);
 
+  /*
   // Get the latest data from the Heart Rate Sensor.
   Wire.requestFrom(0xA0 >> 1, 1);
   while(Wire.available()) {
@@ -120,7 +124,7 @@ void loop() {
 
   // Update the lie state.
   char c = get_command();
-
+  */
 
 
   delay(100);

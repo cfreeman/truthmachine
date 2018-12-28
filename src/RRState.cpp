@@ -19,59 +19,53 @@
 #include <Arduino.h>
 #include "RRState.h"
 
+RRState Initial(RRState current_state,
+                int chest_pos,
+                unsigned long current_time) {
+  if (current_time > (current_state.last_t + 2000)) {
+    int minima = min(chest_pos, current_state.last_chest_pos);
+
+    if (chest_pos > (minima + RRTHRESH)) {
+      return {minima, current_time, current_state.breaths, current_state.bpm, &BreatheOut};
+    } else {
+      return {minima, current_state.last_t, current_state.breaths, current_state.bpm, &Initial};
+    }
+  }
+
+  return current_state;
+}
+
 RRState BreatheIn(RRState current_state,
                   int chest_pos,
                   unsigned long current_time) {
 
-  int delta_cp = chest_pos - current_state.last_chest_pos;
-  int new_cp = (chest_pos < current_state.last_chest_pos) ? chest_pos : current_state.last_chest_pos;
+  // chest_pos decreases as you breathe in.
+  int minima = min(chest_pos, current_state.last_chest_pos);
 
-  if (abs(delta_cp) <= RRTHRESH || delta_cp < -RRTHRESH) {
-    return {new_cp, current_state.last_t, current_state.breaths, current_state.bpm, &BreatheIn};
+  if (chest_pos > (minima + RRTHRESH)) {
+    add_value(current_state.breaths, (int)(current_time - current_state.last_t));
+    current_state.bpm = 60000 / current_state.breaths->smoothed_value;
+
+    Serial.print("**** ");
+    Serial.print(current_state.bpm);
+    Serial.println("BPM");
+
+    return {minima, current_time, current_state.breaths, current_state.bpm, &BreatheOut};
   }
 
-  // have reached our chest peek, count the breath.
-  // Serial.print("Breath cp: ");
-  // Serial.print(chest_pos);
-  // Serial.print(" lcp:");
-  // Serial.print(current_state.last_chest_pos);
-  // Serial.print(" ncp:");
-  // Serial.print(new_cp);
-  // Serial.print(" dlcp:");
-  // Serial.println(delta_cp);
-
-  // Serial.print("BT: ");
-  // Serial.println(current_time - current_state.last_t);
-
-  add_value(current_state.breaths, (int)(current_time - current_state.last_t));
-  current_state.bpm = 60000 / current_state.breaths->smoothed_value;
-
-//  Serial.print("****");
-  // Serial.print(current_state.bpm);
-  // Serial.println("BPM");
-
-  return {new_cp, current_time, current_state.breaths, current_state.bpm, &BreatheOut};
+  return {minima, current_state.last_t, current_state.breaths, current_state.bpm, &BreatheIn};
 }
 
 RRState BreatheOut(RRState current_state,
                    int chest_pos,
                    unsigned long current_time) {
 
-  int delta_cp = chest_pos - current_state.last_chest_pos;
-  int new_cp = (chest_pos > current_state.last_chest_pos) ? chest_pos : current_state.last_chest_pos;
+  // chest_pos increases as you breathe out.
+  int maxima = max(chest_pos, current_state.last_chest_pos);
 
-  if (abs(delta_cp) <= RRTHRESH || delta_cp > RRTHRESH) {
-    return {new_cp, current_state.last_t, current_state.breaths, current_state.bpm, &BreatheOut};
+  if (chest_pos < (maxima - RRTHRESH)) {
+    return {maxima, current_state.last_t, current_state.breaths, current_state.bpm, &BreatheIn};
   }
 
-  // Serial.print("BreatheOut to In cp: ");
-  // Serial.print(chest_pos);
-  // Serial.print(" lcp:");
-  // Serial.print(current_state.last_chest_pos);
-  // Serial.print(" ncp:");
-  // Serial.print(new_cp);
-  // Serial.print(" dcp:");
-  // Serial.println(delta_cp);
-
-  return {new_cp, current_state.last_t, current_state.breaths, current_state.bpm, &BreatheIn};
+  return {maxima, current_state.last_t, current_state.breaths, current_state.bpm, &BreatheOut};
 }
