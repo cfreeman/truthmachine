@@ -19,7 +19,6 @@
 #include "Transmit.h"
 
 #include <Arduino.h>
-#include <BridgeClient.h>
 
 
 #define BUFFER_LEN 64
@@ -40,7 +39,7 @@ void transmit(char command, float argument) {
   buffer[COM_POS] = command;
   // Add the argument to the end of the URL.
   dtostrf(argument, 5, 5, &buffer[ARG_POS]);
-  Serial.println(buffer);
+  //Serial.println(buffer);
 
   // Spin up a curl process on the atheros processor running linino.
   Process p;

@@ -20,28 +20,32 @@
 #include "LieState.h"
 #include "Transmit.h"
 
-LieState idle(LieState current_state,
+LieState Idle(LieState current_state,
               char command,
               int respiratory_rate,
               int heart_rate,
               int galvanic_skin_response,
               unsigned long current_time) {
+  Serial.println("Idle");
+
   if (command == 'i') {
-    return LieState{{0}, {0}, {0}, current_time, &measure};
+    return LieState{{0}, {0}, {0}, current_time, &Measure};
   }
 
   return current_state;
 }
 
-LieState measure(LieState current_state,
+LieState Measure(LieState current_state,
                  char command,
                  int respiratory_rate,
                  int heart_rate,
                  int galvanic_skin_response,
                  unsigned long current_time) {
 
+  Serial.println("Measure");
+
   if (current_time > (current_state.stateStart + (MEASURE_DURATION / LOG_LENGTH))) {
-    LieState newLieState = {{0}, {0}, {0}, current_time, &log};
+    LieState newLieState = {{0}, {0}, {0}, current_state.stateStart, &Log};
     for (uint8_t i = 0; i < LOG_LENGTH; i++) {
       newLieState.rr_delta_t[i] = current_state.rr_delta_t[i];
       newLieState.hr_delta_t[i] = current_state.hr_delta_t[i];
@@ -54,14 +58,16 @@ LieState measure(LieState current_state,
   return current_state;
 }
 
-LieState log(LieState current_state,
+LieState Log(LieState current_state,
              char command,
              int respiratory_rate,
              int heart_rate,
              int galvanic_skin_response,
              unsigned long current_time) {
 
-  LieState newLieState = {{0}, {0}, {0}, current_time, &measure};
+  Serial.println("Log");
+
+  LieState newLieState = {{0}, {0}, {0}, current_state.stateStart, &Measure};
   for (uint8_t i = 0; i < LOG_LENGTH; i++) {
       newLieState.rr_delta_t[i] = current_state.rr_delta_t[i];
       newLieState.hr_delta_t[i] = current_state.hr_delta_t[i];
@@ -74,11 +80,12 @@ LieState log(LieState current_state,
   newLieState.rr_delta_t[i] = respiratory_rate;
   newLieState.hr_delta_t[i] = heart_rate;
   newLieState.gs_delta_t[i] = galvanic_skin_response;
-  newLieState.updateRR = &measure;
+  newLieState.updateLS = &Measure;
 
   // If we have filled our delta_t logs, switch to report mode.
   if (current_time >= (current_state.stateStart + MEASURE_DURATION)) {
-    newLieState.updateRR = &report;
+    newLieState.stateStart = current_time;
+    newLieState.updateLS = &Report;
   }
 
   return newLieState;
@@ -102,12 +109,14 @@ float gradient(int dataSet[LOG_LENGTH]) {
   return ((LOG_LENGTH * sumXY) - (sumX * sumY)) / (float)((LOG_LENGTH * sumXX) - (sumXX * sumXX));
 }
 
-LieState report(LieState current_state,
+LieState Report(LieState current_state,
                 char command,
                 int respiratory_rate,
                 int heart_rate,
                 int galvanic_skin_response,
                 unsigned long current_time) {
+
+  Serial.println("Report");
 
   // Calculate lie likelyhood
   float trendR = gradient(current_state.rr_delta_t);
@@ -121,7 +130,7 @@ LieState report(LieState current_state,
   Serial.print("Trend G:");
   Serial.println(trendG);
 
-  float lie_likely_hood = trendR + trendH + (2 * trendG);
+  float lie_likely_hood = (trendR + trendH + (2 * trendG)) / 4.0;
 
   Serial.print("Like Likelyhood: ");
   Serial.println(lie_likely_hood);
@@ -131,5 +140,5 @@ LieState report(LieState current_state,
   transmit('g', galvanic_skin_response);
   transmit('l', lie_likely_hood);
 
-  return LieState {{0}, {0}, {0}, current_time, &idle};
+  return LieState {{0}, {0}, {0}, current_time, &Idle};
 }

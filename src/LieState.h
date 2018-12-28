@@ -19,7 +19,7 @@
 #ifndef _LIE_STATE_C_ACH_
 #define _LIE_STATE_C_ACH_
 
-#define MEASURE_DURATION 5000   // The duration of the lie detection process. 
+#define MEASURE_DURATION 5000   // The duration of the lie detection process.
 #define LOG_LENGTH 10           // The number of datapoints to collect for calculating lie likelyhood
 
 typedef struct LieStateStruct (*LieModeFn)(struct LieStateStruct current_state,
@@ -37,31 +37,31 @@ typedef struct LieStateStruct {
 
   unsigned long stateStart;   // The time in milliseconds when the current updateRR mode started.
 
-  LieModeFn updateRR;
+  LieModeFn updateLS;
 } LieState;
 
-LieState idle(LieState current_state,
+LieState Idle(LieState current_state,
               char command,
               int respiratory_rate,
               int heart_rate,
               int galvanic_skin_response,
               unsigned long current_time);
 
-LieState measure(LieState current_state,
+LieState Measure(LieState current_state,
                  char command,
                  int respiratory_rate,
                  int heart_rate,
                  int galvanic_skin_response,
                  unsigned long current_time);
 
-LieState log(LieState current_state,
+LieState Log(LieState current_state,
              char command,
              int respiratory_rate,
              int heart_rate,
              int galvanic_skin_response,
              unsigned long current_time);
 
-LieState report(LieState current_state,
+LieState Report(LieState current_state,
                 char command,
                 int respiratory_rate,
                 int heart_rate,

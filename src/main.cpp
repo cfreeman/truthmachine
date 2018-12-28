@@ -17,12 +17,12 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 #include <Arduino.h>
-#include <Wire.h>
-
 #include <Bridge.h>
 #include <BridgeServer.h>
 #include <BridgeClient.h>
+#include <Wire.h>
 
+#include "LieState.h"
 #include "RRState.h"
 #include "SmoothedStruct.h"
 #include "Transmit.h"
@@ -31,9 +31,10 @@
 
 TODO:
 
- * Workout why the breaths per minute measure occasionally dips to negative.
+ * Workout why the breaths per minute measure occasionally briefly dips negative.
  * Add the ability to calibrate and set baseline responses.
  * Calculate lie likelyhood.
+ * The measure / log / report cycle is not quite right yet.
 
 */
 
@@ -43,6 +44,8 @@ RRState rr_state;
 SmoothedValues *rr_sensor;
 SmoothedValues *gsr_sensor;
 SmoothedValues *delta_t_breaths;
+
+LieState lie_state;
 
 int heartRate;
 unsigned long lastBeat;
@@ -58,7 +61,6 @@ void setup() {
 
   Wire.begin();
 
-
   rr_sensor = new_smoothed(10);       // Exists till hard recycle.
   gsr_sensor = new_smoothed(10);      // Exists till hard recycle.
   delta_t_breaths = new_smoothed(10); // Exists till hard recycle.
@@ -69,7 +71,8 @@ void setup() {
   add_value(gsr_sensor, analogRead(A0));
   add_value(rr_sensor, analogRead(A1));
 
-  rr_state = {rr_sensor->smoothed_value, millis(), delta_t_breaths, 0, &Initial};
+  rr_state = RRState{rr_sensor->smoothed_value, millis(), delta_t_breaths, 0, &Initial};
+  lie_state = LieState{{0}, {0}, {0}, millis(), &Idle};
 
   Serial.println("Done");
 }
@@ -103,11 +106,10 @@ void loop() {
   unsigned long t = millis();
 
   // Get the latest data from the Respiration Rate and Galvanic Skin Response Sensors.
-  //add_value(gsr_sensor, analogRead(A0));
+  add_value(gsr_sensor, analogRead(A0));
   add_value(rr_sensor, analogRead(A1));
   rr_state = rr_state.updateRR(rr_state, rr_sensor->smoothed_value, t);
 
-  /*
   // Get the latest data from the Heart Rate Sensor.
   Wire.requestFrom(0xA0 >> 1, 1);
   while(Wire.available()) {
@@ -124,7 +126,7 @@ void loop() {
 
   // Update the lie state.
   char c = get_command();
-  */
+  lie_state = lie_state.updateLS(lie_state, c, rr_state.bpm, heartRate, analogRead(A0), t);
 
 
   delay(100);
