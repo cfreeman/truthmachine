@@ -20,6 +20,29 @@
 #include "LieState.h"
 #include "Transmit.h"
 
+LieState copyLieState(const LieState *current_state,
+                      bool includeInterrogation,
+                      LieModeFn updateFN) {
+  LieState newLieState = {{0}, {0}, {0}, {0}, {0}, {0},
+                          current_state->calibrationPoints,
+                          current_state->stateStart,
+                          updateFN};
+
+  for (uint8_t i = 0; i < LOG_LENGTH; i++) {
+    if (includeInterrogation) {
+      newLieState.rr_delta_t[i] = current_state->rr_delta_t[i];
+      newLieState.hr_delta_t[i] = current_state->hr_delta_t[i];
+      newLieState.gs_delta_t[i] = current_state->gs_delta_t[i];
+    }
+
+    newLieState.rr_delta_t_calibration[i] = current_state->rr_delta_t_calibration[i];
+    newLieState.hr_delta_t_calibration[i] = current_state->hr_delta_t_calibration[i];
+    newLieState.gs_delta_t_calibration[i] = current_state->gs_delta_t_calibration[i];
+  }
+
+  return newLieState;
+}
+
 LieState Idle(LieState current_state,
               char command,
               int respiratory_rate,
@@ -29,7 +52,15 @@ LieState Idle(LieState current_state,
   Serial.println("Idle");
 
   if (command == 'i') {
-    return LieState{{0}, {0}, {0}, current_time, &Measure};
+    LieState newLieState = copyLieState(&current_state, false, &Measure);
+    newLieState.stateStart = current_time;
+
+    return newLieState;
+  } else if (command == 'c') {
+    LieState newLieState = copyLieState(&current_state, false, &Calibrate);
+    newLieState.stateStart = current_time;
+
+    return newLieState;
   }
 
   return current_state;
@@ -45,12 +76,7 @@ LieState Measure(LieState current_state,
   Serial.println("Measure");
 
   if (current_time > (current_state.stateStart + (MEASURE_DURATION / LOG_LENGTH))) {
-    LieState newLieState = {{0}, {0}, {0}, current_state.stateStart, &Log};
-    for (uint8_t i = 0; i < LOG_LENGTH; i++) {
-      newLieState.rr_delta_t[i] = current_state.rr_delta_t[i];
-      newLieState.hr_delta_t[i] = current_state.hr_delta_t[i];
-      newLieState.gs_delta_t[i] = current_state.gs_delta_t[i];
-    }
+    LieState newLieState = copyLieState(&current_state, true, &Log);
 
     return newLieState;
   }
@@ -67,12 +93,7 @@ LieState Log(LieState current_state,
 
   Serial.println("Log");
 
-  LieState newLieState = {{0}, {0}, {0}, current_state.stateStart, &Measure};
-  for (uint8_t i = 0; i < LOG_LENGTH; i++) {
-      newLieState.rr_delta_t[i] = current_state.rr_delta_t[i];
-      newLieState.hr_delta_t[i] = current_state.hr_delta_t[i];
-      newLieState.gs_delta_t[i] = current_state.gs_delta_t[i];
-    }
+  LieState newLieState = copyLieState(&current_state, true, &Measure);
 
   uint8_t i = LOG_LENGTH * (uint8_t)((current_time - current_state.stateStart) / (float) MEASURE_DURATION);
   i = min(LOG_LENGTH, i);
@@ -80,7 +101,6 @@ LieState Log(LieState current_state,
   newLieState.rr_delta_t[i] = respiratory_rate;
   newLieState.hr_delta_t[i] = heart_rate;
   newLieState.gs_delta_t[i] = galvanic_skin_response;
-  newLieState.updateLS = &Measure;
 
   // If we have filled our delta_t logs, switch to report mode.
   if (current_time >= (current_state.stateStart + MEASURE_DURATION)) {
@@ -140,5 +160,28 @@ LieState Report(LieState current_state,
   transmit('g', galvanic_skin_response);
   transmit('l', lie_likely_hood);
 
-  return LieState {{0}, {0}, {0}, current_time, &Idle};
+  LieState newLieState = copyLieState(&current_state, true, &Idle);
+
+  return newLieState;
+}
+
+LieState Calibrate(LieState current_state,
+                   char command,
+                   int respiratory_rate,
+                   int heart_rate,
+                   int galvanic_skin_response,
+                   unsigned long current_time) {
+  Serial.println("Calibrate");
+
+
+  return current_state;
+}
+
+LieState LogCalibration(LieState current_state,
+                        char command,
+                        int respiratory_rate,
+                        int heart_rate,
+                        int galvanic_skin_response,
+                        unsigned long current_time) {
+  return current_state;
 }

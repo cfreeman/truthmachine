@@ -35,6 +35,12 @@ typedef struct LieStateStruct {
   int hr_delta_t[LOG_LENGTH];
   int gs_delta_t[LOG_LENGTH];
 
+  int rr_delta_t_calibration[LOG_LENGTH];
+  int hr_delta_t_calibration[LOG_LENGTH];
+  int gs_delta_t_calibration[LOG_LENGTH];
+
+  unsigned int calibrationPoints;
+
   unsigned long stateStart;   // The time in milliseconds when the current updateRR mode started.
 
   LieModeFn updateLS;
@@ -68,6 +74,26 @@ LieState Report(LieState current_state,
                 int galvanic_skin_response,
                 unsigned long current_time);
 
+// LieState Reset(LieState current_state,
+//                char command,
+//                int respiratory_rate,
+//                int heart_rate,
+//                int galvanic_skin_response,
+//                unsigned long current_time);
+
+LieState Calibrate(LieState current_state,
+                   char command,
+                   int respiratory_rate,
+                   int heart_rate,
+                   int galvanic_skin_response,
+                   unsigned long current_time);
+
+LieState LogCalibration(LieState current_state,
+                        char command,
+                        int respiratory_rate,
+                        int heart_rate,
+                        int galvanic_skin_response,
+                        unsigned long current_time);
 
 
 #endif
