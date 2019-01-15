@@ -32,7 +32,6 @@
 TODO:
 
  * Workout why the breaths per minute measure occasionally briefly dips negative.
- * Add the ability to calibrate and set baseline responses.
  * The measure / log / report cycle is not quite right yet.
 
 */
