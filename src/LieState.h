@@ -74,12 +74,12 @@ LieState Report(LieState current_state,
                 int galvanic_skin_response,
                 unsigned long current_time);
 
-// LieState Reset(LieState current_state,
-//                char command,
-//                int respiratory_rate,
-//                int heart_rate,
-//                int galvanic_skin_response,
-//                unsigned long current_time);
+LieState Reset(LieState current_state,
+               char command,
+               int respiratory_rate,
+               int heart_rate,
+               int galvanic_skin_response,
+               unsigned long current_time);
 
 LieState Calibrate(LieState current_state,
                    char command,

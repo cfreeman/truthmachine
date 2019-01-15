@@ -33,7 +33,6 @@ TODO:
 
  * Workout why the breaths per minute measure occasionally briefly dips negative.
  * Add the ability to calibrate and set baseline responses.
- * Calculate lie likelyhood.
  * The measure / log / report cycle is not quite right yet.
 
 */
@@ -72,7 +71,7 @@ void setup() {
   add_value(rr_sensor, analogRead(A1));
 
   rr_state = RRState{rr_sensor->smoothed_value, millis(), delta_t_breaths, 0, &Initial};
-  lie_state = LieState{{0}, {0}, {0}, millis(), &Idle};
+  lie_state = LieState{{0}, {0}, {0}, {0}, {0}, {0}, 0, millis(), &Idle};
 
   Serial.println("Done");
 }
@@ -96,6 +95,8 @@ char get_command() {
     return 'i';
   } else if (command == "calibrate") {
     return 'c';
+  } else if (command == "reset") {
+    return 'r';
   }
 
   return '.';
@@ -116,6 +117,13 @@ void loop() {
     heartRate = (int) Wire.read();
   }
 
+  // Serial.print("GSR: ");
+  // Serial.println(analogRead(A0));
+  // Serial.print("RR: ");
+  // Serial.println(analogRead(A1));
+  // Serial.print("HR: ");
+  // Serial.println(heartRate);
+
   // Transmit a pulse message to the server at the same rate that the participants
   // heart rate is beating.
   unsigned long deltaP = (unsigned long)(heartRate / 0.06);
@@ -127,7 +135,6 @@ void loop() {
   // Update the lie state.
   char c = get_command();
   lie_state = lie_state.updateLS(lie_state, c, rr_state.bpm, heartRate, analogRead(A0), t);
-
 
   delay(100);
 }
