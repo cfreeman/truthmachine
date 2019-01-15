@@ -22,6 +22,7 @@
 RRState Initial(RRState current_state,
                 int chest_pos,
                 unsigned long current_time) {
+
   if (current_time > (current_state.last_t + 2000)) {
     int minima = min(chest_pos, current_state.last_chest_pos);
 

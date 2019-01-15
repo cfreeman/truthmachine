@@ -35,7 +35,7 @@
 //     heart rate in beats per minute.
 void transmit(char command, float argument) {
 
-  char buffer[BUFFER_LEN] = "http://192.168.86.103:8080/*?v=";
+  char buffer[BUFFER_LEN] = "http://192.168.86.111:8080/*?v=";
   buffer[COM_POS] = command;
   // Add the argument to the end of the URL.
   dtostrf(argument, 5, 5, &buffer[ARG_POS]);

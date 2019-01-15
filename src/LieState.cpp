@@ -49,7 +49,7 @@ LieState Idle(LieState current_state,
               int heart_rate,
               int galvanic_skin_response,
               unsigned long current_time) {
-  Serial.println("Idle");
+  //Serial.println("Idle");
 
   if (command == 'i') {
     LieState newLieState = copyLieState(&current_state, false, &Measure);
@@ -232,14 +232,16 @@ LieState LogCalibration(LieState current_state,
   uint8_t i = LOG_LENGTH * (uint8_t)((current_time - current_state.stateStart) / (float) MEASURE_DURATION);
   i = min(LOG_LENGTH, i);
 
-  newLieState.rr_delta_t[i] = respiratory_rate;
-  newLieState.hr_delta_t[i] = heart_rate;
-  newLieState.gs_delta_t[i] = galvanic_skin_response;
+  newLieState.rr_delta_t[i] += respiratory_rate;
+  newLieState.hr_delta_t[i] += heart_rate;
+  newLieState.gs_delta_t[i] += galvanic_skin_response;
 
   // If we have filled our delta_t logs, switch to report mode.
   if (current_time >= (current_state.stateStart + MEASURE_DURATION)) {
     newLieState.stateStart = current_time;
-    newLieState.updateLS = &Report;
+    newLieState.updateLS = &Idle;
+
+    return newLieState;
   }
 
   return current_state;

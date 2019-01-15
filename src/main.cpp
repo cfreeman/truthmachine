@@ -136,5 +136,5 @@ void loop() {
   char c = get_command();
   lie_state = lie_state.updateLS(lie_state, c, rr_state.bpm, heartRate, analogRead(A0), t);
 
-  delay(100);
+  delay(40);
 }
