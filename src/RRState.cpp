@@ -47,9 +47,9 @@ RRState BreatheIn(RRState current_state,
     add_value(current_state.breaths, (int)(current_time - current_state.last_t));
     current_state.bpm = 60000 / current_state.breaths->smoothed_value;
 
-    Serial.print("**** ");
-    Serial.print(current_state.bpm);
-    Serial.println("BPM");
+    //Serial.print("**** ");
+    //Serial.print(current_state.bpm);
+    //Serial.println("BPM");
 
     return {minima, current_time, current_state.breaths, current_state.bpm, &BreatheOut};
   }

@@ -20,10 +20,11 @@
 
 #include <Arduino.h>
 
-
 #define BUFFER_LEN 64
 #define COM_POS 27
 #define ARG_POS 31
+
+HttpClient client;
 
 // Transmits:
 // l - Is the lielikelyhood, a normalised value between 0.0 and 1.0 for how stressed / more likely
@@ -39,12 +40,6 @@ void transmit(char command, float argument) {
   buffer[COM_POS] = command;
   // Add the argument to the end of the URL.
   dtostrf(argument, 5, 5, &buffer[ARG_POS]);
-  //Serial.println(buffer);
 
-  // Spin up a curl process on the atheros processor running linino.
-  Process p;
-  p.begin("curl");
-  p.addParameter(buffer); // Add the URL parameter to "curl"
-  p.run();
-
+  client.get(buffer);
 }

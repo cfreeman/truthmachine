@@ -31,8 +31,7 @@
 
 TODO:
 
- * Workout why the breaths per minute measure occasionally briefly dips negative.
- * The measure / log / report cycle is not quite right yet.
+ * hardcode in the most likely IP address of the host qlab machine.
 
 */
 
@@ -40,7 +39,6 @@ BridgeServer server;
 
 RRState rr_state;
 SmoothedValues *rr_sensor;
-SmoothedValues *gsr_sensor;
 SmoothedValues *delta_t_breaths;
 
 LieState lie_state;
@@ -50,29 +48,23 @@ unsigned long lastBeat;
 
 // setup configures the underlying hardware for use in the main loop.
 void setup() {
-  Serial.begin(9600);
-  Serial.print("Booting ... ");
-
   Bridge.begin();
+
   server.listenOnLocalhost();
   server.begin();
 
   Wire.begin();
 
   rr_sensor = new_smoothed(10);       // Exists till hard recycle.
-  gsr_sensor = new_smoothed(10);      // Exists till hard recycle.
   delta_t_breaths = new_smoothed(10); // Exists till hard recycle.
 
   heartRate = 0;
   lastBeat = 0;
 
-  add_value(gsr_sensor, analogRead(A0));
   add_value(rr_sensor, analogRead(A1));
 
   rr_state = RRState{rr_sensor->smoothed_value, millis(), delta_t_breaths, 0, &Initial};
   lie_state = LieState{{0}, {0}, {0}, {0}, {0}, {0}, 0, millis(), &Idle};
-
-  Serial.println("Done");
 }
 
 // Recieves:
@@ -106,7 +98,6 @@ void loop() {
   unsigned long t = millis();
 
   // Get the latest data from the Respiration Rate and Galvanic Skin Response Sensors.
-  add_value(gsr_sensor, analogRead(A0));
   add_value(rr_sensor, analogRead(A1));
   rr_state = rr_state.updateRR(rr_state, rr_sensor->smoothed_value, t);
 
@@ -115,13 +106,6 @@ void loop() {
   while(Wire.available()) {
     heartRate = (int) Wire.read();
   }
-
-  // Serial.print("GSR: ");
-  // Serial.println(analogRead(A0));
-  // Serial.print("RR: ");
-  // Serial.println(analogRead(A1));
-  // Serial.print("HR: ");
-  // Serial.println(heartRate);
 
   // Transmit a pulse message to the server at the same rate that the participants
   // heart rate is beating.
@@ -135,5 +119,5 @@ void loop() {
   char c = get_command();
   lie_state = lie_state.updateLS(lie_state, c, rr_state.bpm, heartRate, analogRead(A0), t);
 
-  delay(40);
+  delay(50);
 }

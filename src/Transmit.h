@@ -19,8 +19,7 @@
 #ifndef _TRANSMIT_C_ACH_
 #define _TRANSMIT_C_ACH_
 
-#include <BridgeClient.h>
-#include <BridgeServer.h>
+#include <HttpClient.h>
 
 void transmit(char command, float argument);
 

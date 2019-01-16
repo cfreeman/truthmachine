@@ -49,23 +49,22 @@ LieState Idle(LieState current_state,
               int heart_rate,
               int galvanic_skin_response,
               unsigned long current_time) {
-  //Serial.println("Idle");
 
   if (command == 'i') {
     LieState newLieState = copyLieState(&current_state, false, &Measure);
     newLieState.stateStart = current_time;
-
     return newLieState;
+
   } else if (command == 'c') {
     LieState newLieState = copyLieState(&current_state, false, &Calibrate);
     newLieState.stateStart = current_time;
-
     return newLieState;
+
   } else if (command == 'r') {
     LieState newLieState = copyLieState(&current_state, false, &Reset);
     newLieState.stateStart = current_time;
-
     return newLieState;
+
   }
 
   return current_state;
@@ -77,8 +76,6 @@ LieState Measure(LieState current_state,
                  int heart_rate,
                  int galvanic_skin_response,
                  unsigned long current_time) {
-
-  Serial.println("Measure");
 
   if (command == 'r') {
     LieState newLieState = copyLieState(&current_state, false, &Reset);
@@ -101,8 +98,6 @@ LieState Log(LieState current_state,
              int heart_rate,
              int galvanic_skin_response,
              unsigned long current_time) {
-
-  Serial.println("Log");
 
   if (command == 'r') {
     LieState newLieState = copyLieState(&current_state, false, &Reset);
@@ -153,8 +148,6 @@ LieState Report(LieState current_state,
                 int galvanic_skin_response,
                 unsigned long current_time) {
 
-  Serial.println("Report");
-
   if (command == 'r') {
     LieState newLieState = copyLieState(&current_state, false, &Reset);
     newLieState.stateStart = current_time;
@@ -182,17 +175,7 @@ LieState Report(LieState current_state,
   float trendH = gradient(current_state.hr_delta_t);
   float trendG = gradient(current_state.gs_delta_t);
 
-  Serial.print("Trend R:");
-  Serial.println(trendR);
-  Serial.print("Trend H:");
-  Serial.println(trendH);
-  Serial.print("Trend G:");
-  Serial.println(trendG);
-
   float lie_likely_hood = ((trendR + trendH + (2 * trendG)) / 4.0) - calibrate_trend;
-
-  Serial.print("Like Likelyhood: ");
-  Serial.println(lie_likely_hood);
 
   transmit('h', heart_rate);
   transmit('r', respiratory_rate);
@@ -210,8 +193,6 @@ LieState Calibrate(LieState current_state,
                    int heart_rate,
                    int galvanic_skin_response,
                    unsigned long current_time) {
-
-  Serial.println("Calibrate");
 
   if (command == 'r') {
     LieState newLieState = copyLieState(&current_state, false, &Reset);
@@ -235,28 +216,26 @@ LieState LogCalibration(LieState current_state,
                         int galvanic_skin_response,
                         unsigned long current_time) {
 
-  Serial.println("Log Calibration");
-
   if (command == 'r') {
     LieState newLieState = copyLieState(&current_state, false, &Reset);
     newLieState.stateStart = current_time;
     return newLieState;
   }
 
-  LieState newLieState = copyLieState(&current_state, true, &Measure);
+  LieState newLieState = copyLieState(&current_state, true, &Calibrate);
 
   uint8_t i = LOG_LENGTH * (uint8_t)((current_time - current_state.stateStart) / (float) MEASURE_DURATION);
   i = min(LOG_LENGTH, i);
 
-  newLieState.rr_delta_t[i] += respiratory_rate;
-  newLieState.hr_delta_t[i] += heart_rate;
-  newLieState.gs_delta_t[i] += galvanic_skin_response;
-
-  newLieState.calibrationPoints = newLieState.calibrationPoints + 1;
+  newLieState.rr_delta_t_calibration[i] += respiratory_rate;
+  newLieState.hr_delta_t_calibration[i] += heart_rate;
+  newLieState.gs_delta_t_calibration[i] += galvanic_skin_response;
 
   // If we have filled our delta_t logs, switch to report mode.
   if (current_time >= (current_state.stateStart + MEASURE_DURATION)) {
     newLieState.stateStart = current_time;
+    newLieState.calibrationPoints = newLieState.calibrationPoints + 1;
+
     newLieState.updateLS = &Idle;
 
     return newLieState;
@@ -271,7 +250,6 @@ LieState Reset(LieState current_state,
                int heart_rate,
                int galvanic_skin_response,
                unsigned long current_time) {
-  Serial.println("Reset");
 
   return LieState {{0}, {0}, {0}, {0}, {0}, {0}, 0, current_time, &Idle};
 }
