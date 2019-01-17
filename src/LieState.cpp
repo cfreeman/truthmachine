@@ -182,7 +182,7 @@ LieState Report(LieState current_state,
   transmit('g', galvanic_skin_response);
   transmit('l', lie_likely_hood);
 
-  LieState newLieState = copyLieState(&current_state, true, &Idle);
+  LieState newLieState = copyLieState(&current_state, false, &Idle);
 
   return newLieState;
 }
@@ -201,7 +201,7 @@ LieState Calibrate(LieState current_state,
   }
 
   if (current_time > (current_state.stateStart + (MEASURE_DURATION / LOG_LENGTH))) {
-    LieState newLieState = copyLieState(&current_state, true, &LogCalibration);
+    LieState newLieState = copyLieState(&current_state, false, &LogCalibration);
 
     return newLieState;
   }
@@ -222,7 +222,7 @@ LieState LogCalibration(LieState current_state,
     return newLieState;
   }
 
-  LieState newLieState = copyLieState(&current_state, true, &Calibrate);
+  LieState newLieState = copyLieState(&current_state, false, &Calibrate);
 
   uint8_t i = LOG_LENGTH * (uint8_t)((current_time - current_state.stateStart) / (float) MEASURE_DURATION);
   i = min(LOG_LENGTH, i);

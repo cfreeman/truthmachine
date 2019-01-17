@@ -21,10 +21,11 @@
 #include <Arduino.h>
 
 #define BUFFER_LEN 64
-#define COM_POS 27 //21
-#define ARG_POS 31 //25
+#define COM_POS 21
+#define ARG_POS 25
 
-HttpClient client;
+char buffer[BUFFER_LEN] = "http://10.0.1.2:8080/*?v=";
+
 
 // Transmits:
 // l - Is the lielikelyhood, a normalised value between 0.0 and 1.0 for how stressed / more likely
@@ -35,14 +36,9 @@ HttpClient client;
 // p - The pulse of the participant and is transmitted 'n' times a minute where n is the current
 //     heart rate in beats per minute.
 void transmit(char command, float argument) {
-
-
-                         // "http://10.0.1.2:8080/*?v="
-
-  char buffer[BUFFER_LEN] = "http://192.168.86.111:8080/*?v=";
   buffer[COM_POS] = command;
-  // Add the argument to the end of the URL.
   dtostrf(argument, 5, 5, &buffer[ARG_POS]);
-
+  HttpClient client;
   client.get(buffer);
+  delay(0);
 }

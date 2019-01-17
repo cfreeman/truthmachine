@@ -27,14 +27,6 @@
 #include "SmoothedStruct.h"
 #include "Transmit.h"
 
-/**
-
-TODO:
-
- * hardcode in the most likely IP address of the host qlab machine.
-
-*/
-
 BridgeServer server;
 
 RRState rr_state;
@@ -102,13 +94,13 @@ void loop() {
   // heart rate is beating.
   unsigned long deltaP = (unsigned long)(heartRate / 0.06);
   if (t > (lastBeat + deltaP)) {
-    transmit('p', 0.0);
     lastBeat = t;
+    transmit('p', 0.0);
   }
 
   // Update the lie state.
   char c = get_command();
   lie_state = lie_state.updateLS(lie_state, c, rr_state.bpm, heartRate, analogRead(A0), t);
 
-  delay(75);
+  delay(50);
 }
