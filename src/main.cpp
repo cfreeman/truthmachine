@@ -70,24 +70,15 @@ void setup() {
 // Recieves:
 // /interrogate - When the sensor receives this message it monitors the biometric sensors for ten seconds (configurable) and calculates the lie likely hood. When completed the sensor transmits a /lielikelyhood message back.
 char get_command() {
-  // ADDRESSES: 192.168.0.6/arduino/interrogate
-  //            192.168.0.6/arduino/calibrate
+  // ADDRESSES: http://10.0.1.3/arduino/interrogate
+  //            http://10.0.1.3/arduino/calibrate
 
   BridgeClient client = server.accept();
-  if (!client) {
-    return '.';
-  }
 
-  String command = client.readStringUntil('/');
-  client.stop();
-  command.trim();
-
-  if (command == "interrogate") {
-    return 'i';
-  } else if (command == "calibrate") {
-    return 'c';
-  } else if (command == "reset") {
-    return 'r';
+  if (client && client.available()) {
+    char c = (char) client.read();
+    client.stop();
+    return c;
   }
 
   return '.';
@@ -119,5 +110,5 @@ void loop() {
   char c = get_command();
   lie_state = lie_state.updateLS(lie_state, c, rr_state.bpm, heartRate, analogRead(A0), t);
 
-  delay(50);
+  delay(75);
 }

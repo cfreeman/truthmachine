@@ -21,8 +21,8 @@
 #include <Arduino.h>
 
 #define BUFFER_LEN 64
-#define COM_POS 27
-#define ARG_POS 31
+#define COM_POS 27 //21
+#define ARG_POS 31 //25
 
 HttpClient client;
 
@@ -35,6 +35,9 @@ HttpClient client;
 // p - The pulse of the participant and is transmitted 'n' times a minute where n is the current
 //     heart rate in beats per minute.
 void transmit(char command, float argument) {
+
+
+                         // "http://10.0.1.2:8080/*?v="
 
   char buffer[BUFFER_LEN] = "http://192.168.86.111:8080/*?v=";
   buffer[COM_POS] = command;

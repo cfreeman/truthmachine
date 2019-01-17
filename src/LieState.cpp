@@ -238,6 +238,10 @@ LieState LogCalibration(LieState current_state,
 
     newLieState.updateLS = &Idle;
 
+    transmit('h', heart_rate);
+    transmit('r', respiratory_rate);
+    transmit('g', galvanic_skin_response);
+
     return newLieState;
   }
 
