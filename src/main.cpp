@@ -35,9 +35,6 @@ SmoothedValues *delta_t_breaths;
 
 LieState lie_state;
 
-int heartRate;
-unsigned long lastBeat;
-
 // setup configures the underlying hardware for use in the main loop.
 void setup() {
   Bridge.begin();
@@ -49,9 +46,6 @@ void setup() {
 
   rr_sensor = new_smoothed(10);       // Exists till hard recycle.
   delta_t_breaths = new_smoothed(10); // Exists till hard recycle.
-
-  heartRate = 0;
-  lastBeat = 0;
 
   add_value(rr_sensor, analogRead(A1));
 
@@ -84,21 +78,15 @@ void loop() {
   add_value(rr_sensor, analogRead(A1));
   rr_state = rr_state.updateRR(rr_state, rr_sensor->smoothed_value, t);
 
-  // Get the latest data from the Heart Rate Sensor.
+  // Get the latest data from the Heart Rate Sensor and broadcast it to the server.
+  int heartRate = 60;  // Default the heart rate to a fairly average resting rate.
   Wire.requestFrom(0xA0 >> 1, 1);
   while(Wire.available()) {
     heartRate = (int) Wire.read();
   }
+  transmit('h', heartRate);
 
-  // Transmit a pulse message to the server at the same rate that the participants
-  // heart rate is beating.
-  unsigned long deltaP = (unsigned long)(heartRate / 0.06);
-  if (t > (lastBeat + deltaP)) {
-    lastBeat = t;
-    transmit('p', 0.0);
-  }
-
-  // Update the lie state.
+  // Update the state of the theatrical polygraph.
   char c = get_command();
   lie_state = lie_state.updateLS(lie_state, c, rr_state.bpm, heartRate, analogRead(A0), t);
 

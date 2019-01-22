@@ -21,10 +21,16 @@
 #include <Arduino.h>
 
 #define BUFFER_LEN 64
+
+// Performance
 #define COM_POS 21
 #define ARG_POS 25
-
 char buffer[BUFFER_LEN] = "http://10.0.1.2:8080/*?v=";
+
+// Development
+// #define COM_POS 27
+// #define ARG_POS 31
+// char buffer[BUFFER_LEN] = "http://192.168.86.111:8080/*?v=";
 
 
 // Transmits:
