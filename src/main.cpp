@@ -86,8 +86,8 @@ void loop() {
 
   // Get the latest data from the Heart Rate Sensor and broadcast it to the server.
   int heartRate = 60;  // Default the heart rate to a fairly average resting rate.
-  Wire.requestFrom(0xA0 >> 1, 1);
-  while(Wire.available()) {
+  int b = Wire.requestFrom(0xA0 >> 1, 1);
+  if (b > 0) {
     heartRate = (int) Wire.read();
   }
 
