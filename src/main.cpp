@@ -27,6 +27,8 @@
 #include "SmoothedStruct.h"
 #include "Transmit.h"
 
+#define UPDATE_INTERVAL 3000
+
 BridgeServer server;
 
 RRState rr_state;
@@ -34,6 +36,8 @@ SmoothedValues *rr_sensor;
 SmoothedValues *delta_t_breaths;
 
 LieState lie_state;
+
+unsigned long lastUpdate;
 
 // setup configures the underlying hardware for use in the main loop.
 void setup() {
@@ -51,6 +55,8 @@ void setup() {
 
   rr_state = RRState{rr_sensor->smoothed_value, millis(), delta_t_breaths, 0, &Initial};
   lie_state = LieState{{0}, {0}, {0}, {0}, {0}, {0}, 0, millis(), &Idle};
+
+  lastUpdate = millis();
 }
 
 // Recieves:
@@ -84,11 +90,18 @@ void loop() {
   while(Wire.available()) {
     heartRate = (int) Wire.read();
   }
-  transmit('h', heartRate);
+
+  if ((t - lastUpdate) > UPDATE_INTERVAL) {
+    transmit('h', heartRate);
+    transmit('g', analogRead(A0));
+    transmit('r', rr_state.bpm);
+
+    lastUpdate = t;
+  }
 
   // Update the state of the theatrical polygraph.
   char c = get_command();
   lie_state = lie_state.updateLS(lie_state, c, rr_state.bpm, heartRate, analogRead(A0), t);
 
-  delay(50);
+  delay(50);  // Give our microcontroller a little chill.
 }

@@ -177,9 +177,6 @@ LieState Report(LieState current_state,
 
   float lie_likely_hood = ((trendR + trendH + (2 * trendG)) / 4.0) - calibrate_trend;
 
-  transmit('h', heart_rate);
-  transmit('r', respiratory_rate);
-  transmit('g', galvanic_skin_response);
   transmit('l', lie_likely_hood);
 
   LieState newLieState = copyLieState(&current_state, false, &Idle);
@@ -237,10 +234,6 @@ LieState LogCalibration(LieState current_state,
     newLieState.calibrationPoints = newLieState.calibrationPoints + 1;
 
     newLieState.updateLS = &Idle;
-
-    transmit('h', heart_rate);
-    transmit('r', respiratory_rate);
-    transmit('g', galvanic_skin_response);
 
     return newLieState;
   }
