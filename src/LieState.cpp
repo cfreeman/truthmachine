@@ -155,27 +155,24 @@ LieState Report(LieState current_state,
   }
 
   // Calculate calibration gradients.
-  int caliR[LOG_LENGTH];
   int caliH[LOG_LENGTH];
   int caliG[LOG_LENGTH];
   for (unsigned int i = 0; i < LOG_LENGTH; i++) {
-    caliR[i] = current_state.rr_delta_t_calibration[i] / current_state.calibrationPoints;
     caliH[i] = current_state.hr_delta_t_calibration[i] / current_state.calibrationPoints;
     caliG[i] = current_state.gs_delta_t_calibration[i] / current_state.calibrationPoints;
   }
 
-  float trendCR = gradient(caliR);
+
   float trendCH = gradient(caliH);
   float trendCG = gradient(caliG);
 
-  float calibrate_trend = (trendCR + trendCH + (2 * trendCG)) / 4.0;
+  float calibrate_trend = (trendCH + (2 * trendCG)) / 3.0;
 
   // Calculate lie likelyhood
-  float trendR = gradient(current_state.rr_delta_t);
   float trendH = gradient(current_state.hr_delta_t);
   float trendG = gradient(current_state.gs_delta_t);
 
-  float lie_likely_hood = ((trendR + trendH + (2 * trendG)) / 4.0) - calibrate_trend;
+  float lie_likely_hood = ((trendH + (2 * trendG)) / 3.0) - calibrate_trend;
 
   transmit('l', lie_likely_hood);
 

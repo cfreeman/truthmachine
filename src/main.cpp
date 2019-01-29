@@ -27,7 +27,7 @@
 #include "SmoothedStruct.h"
 #include "Transmit.h"
 
-#define UPDATE_INTERVAL 3000
+#define UPDATE_INTERVAL 3000 // The rate at which we update the server.
 
 BridgeServer server;
 
@@ -79,6 +79,7 @@ char get_command() {
 // loop executes over and over on the microcontroller.
 void loop() {
   unsigned long t = millis();
+  int gsr = (1024 - analogRead(A0));
 
   // Get the latest data from the Respiration Rate and Galvanic Skin Response Sensors.
   add_value(rr_sensor, analogRead(A1));
@@ -93,7 +94,7 @@ void loop() {
 
   if ((t - lastUpdate) > UPDATE_INTERVAL) {
     transmit('h', heartRate);
-    transmit('g', analogRead(A0));
+    transmit('g', gsr);
     transmit('r', rr_state.bpm);
 
     lastUpdate = t;
@@ -101,7 +102,7 @@ void loop() {
 
   // Update the state of the theatrical polygraph.
   char c = get_command();
-  lie_state = lie_state.updateLS(lie_state, c, rr_state.bpm, heartRate, analogRead(A0), t);
+  lie_state = lie_state.updateLS(lie_state, c, rr_state.bpm, heartRate, gsr, t);
 
   delay(500);  // Give our microcontroller a little chill.
 }

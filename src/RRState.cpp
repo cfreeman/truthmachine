@@ -45,7 +45,7 @@ RRState BreatheIn(RRState current_state,
 
   if (chest_pos > (minima + RRTHRESH)) {
     add_value(current_state.breaths, (int)(current_time - current_state.last_t));
-    current_state.bpm = 60000 / current_state.breaths->smoothed_value;
+    current_state.bpm = max(0, (60000 / current_state.breaths->smoothed_value));
 
     //Serial.print("**** ");
     //Serial.print(current_state.bpm);
