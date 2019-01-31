@@ -23,14 +23,10 @@
 #define BUFFER_LEN 64
 
 // Performance
-#define COM_POS 21
-#define ARG_POS 25
-char buffer[BUFFER_LEN] = "http://10.0.1.2:8080/*?v=";
+#define BUFFER_FORMAT "http://10.0.1.2:8080/%c?v=%d&b=%d"
 
 // Development
-// #define COM_POS 27
-// #define ARG_POS 31
-// char buffer[BUFFER_LEN] = "http://192.168.86.111:8080/*?v=";
+//#define BUFFER_FORMAT "http://192.168.86.111:8080/%c?v=%d&b=%d"
 
 
 // Transmits:
@@ -39,11 +35,10 @@ char buffer[BUFFER_LEN] = "http://10.0.1.2:8080/*?v=";
 // h - The current heart rate of teh participant in beats per minute.
 // r - The current respiratory rate of the participant in breaths per minute.
 // g - The electrodermal activity of the participant in microsiemens.
-// p - The pulse of the participant and is transmitted 'n' times a minute where n is the current
-//     heart rate in beats per minute.
-void transmit(char command, float argument) {
-  buffer[COM_POS] = command;
-  dtostrf(argument, 5, 5, &buffer[ARG_POS]);
+void transmit(char command, int argument, int baseline) {
+  char buffer[BUFFER_LEN] = "";
+  sprintf(buffer, BUFFER_FORMAT, command, argument, baseline);
+
   HttpClient client;
   client.get(buffer);
   delay(0);

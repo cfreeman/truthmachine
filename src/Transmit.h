@@ -21,6 +21,6 @@
 
 #include <HttpClient.h>
 
-void transmit(char command, float argument);
+void transmit(char command, int argument, int baseline);
 
 #endif

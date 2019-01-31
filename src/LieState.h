@@ -19,8 +19,7 @@
 #ifndef _LIE_STATE_C_ACH_
 #define _LIE_STATE_C_ACH_
 
-#define MEASURE_DURATION 5000   // The duration of the lie detection process.
-#define LOG_LENGTH 10           // The number of datapoints to collect for calculating lie likelyhood
+#define LOG_LENGTH 10            // The number of datapoints to collect for calculating lie likelyhood
 
 typedef struct LieStateStruct (*LieModeFn)(struct LieStateStruct current_state,
                                            char command,
@@ -39,6 +38,11 @@ typedef struct LieStateStruct {
   int hr_delta_t_calibration[LOG_LENGTH];
   int gs_delta_t_calibration[LOG_LENGTH];
 
+  int rr_baseline;
+  int hr_baseline;
+  int gs_baseline;
+
+  unsigned int idx;
   unsigned int calibrationPoints;
 
   unsigned long stateStart;   // The time in milliseconds when the current updateRR mode started.

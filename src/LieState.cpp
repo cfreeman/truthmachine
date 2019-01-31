@@ -24,6 +24,10 @@ LieState copyLieState(const LieState *current_state,
                       bool includeInterrogation,
                       LieModeFn updateFN) {
   LieState newLieState = {{0}, {0}, {0}, {0}, {0}, {0},
+                          current_state->rr_baseline,
+                          current_state->hr_baseline,
+                          current_state->gs_baseline,
+                          current_state->idx,
                           current_state->calibrationPoints,
                           current_state->stateStart,
                           updateFN};
@@ -83,13 +87,10 @@ LieState Measure(LieState current_state,
     return newLieState;
   }
 
-  if (current_time > (current_state.stateStart + (MEASURE_DURATION / LOG_LENGTH))) {
-    LieState newLieState = copyLieState(&current_state, true, &Log);
 
-    return newLieState;
-  }
-
-  return current_state;
+  LieState newLieState = copyLieState(&current_state, true, &Log);
+  newLieState.idx = 0;
+  return newLieState;
 }
 
 LieState Log(LieState current_state,
@@ -105,17 +106,16 @@ LieState Log(LieState current_state,
     return newLieState;
   }
 
-  LieState newLieState = copyLieState(&current_state, true, &Measure);
+  LieState newLieState = copyLieState(&current_state, true, &Log);
 
-  uint8_t i = LOG_LENGTH * (uint8_t)((current_time - current_state.stateStart) / (float) MEASURE_DURATION);
-  i = min(LOG_LENGTH, i);
+  newLieState.rr_delta_t[newLieState.idx] = respiratory_rate;
+  newLieState.hr_delta_t[newLieState.idx] = heart_rate;
+  newLieState.gs_delta_t[newLieState.idx] = galvanic_skin_response;
 
-  newLieState.rr_delta_t[i] = respiratory_rate;
-  newLieState.hr_delta_t[i] = heart_rate;
-  newLieState.gs_delta_t[i] = galvanic_skin_response;
+  newLieState.idx++;
 
   // If we have filled our delta_t logs, switch to report mode.
-  if (current_time >= (current_state.stateStart + MEASURE_DURATION)) {
+  if (newLieState.idx >= LOG_LENGTH) {
     newLieState.stateStart = current_time;
     newLieState.updateLS = &Report;
   }
@@ -162,19 +162,30 @@ LieState Report(LieState current_state,
     caliG[i] = current_state.gs_delta_t_calibration[i] / current_state.calibrationPoints;
   }
 
-
   float trendCH = gradient(caliH);
   float trendCG = gradient(caliG);
-
   float calibrate_trend = (trendCH + (2 * trendCG)) / 3.0;
 
   // Calculate lie likelyhood
   float trendH = gradient(current_state.hr_delta_t);
   float trendG = gradient(current_state.gs_delta_t);
 
-  float lie_likely_hood = ((trendH + (2 * trendG)) / 3.0) - calibrate_trend;
+  int avg_hr = 0;
+  int avg_gs = 0;
 
-  transmit('l', lie_likely_hood);
+  for(unsigned int j = 0; j < LOG_LENGTH; j++) {
+    avg_hr += current_state.hr_delta_t[j];
+    avg_gs += current_state.gs_delta_t[j];
+  }
+  avg_hr = avg_hr / LOG_LENGTH;
+  avg_gs = avg_gs / LOG_LENGTH;
+
+  float lie_likely_hood = ((trendH + (2 * trendG)) / 3.0) - calibrate_trend;
+  lie_likely_hood += (((avg_gs - current_state.gs_baseline) / 1024.0));
+  lie_likely_hood += (((avg_hr - current_state.hr_baseline) / 180.0));
+  lie_likely_hood = max(min(lie_likely_hood, 1.0), 0.0);
+
+  transmit('l', (int) (lie_likely_hood * 100), 50);
 
   LieState newLieState = copyLieState(&current_state, false, &Idle);
 
@@ -194,13 +205,10 @@ LieState Calibrate(LieState current_state,
     return newLieState;
   }
 
-  if (current_time > (current_state.stateStart + (MEASURE_DURATION / LOG_LENGTH))) {
-    LieState newLieState = copyLieState(&current_state, false, &LogCalibration);
+  LieState newLieState = copyLieState(&current_state, false, &LogCalibration);
+  newLieState.idx = 0;
 
-    return newLieState;
-  }
-
-  return current_state;
+  return newLieState;
 }
 
 LieState LogCalibration(LieState current_state,
@@ -216,26 +224,37 @@ LieState LogCalibration(LieState current_state,
     return newLieState;
   }
 
-  LieState newLieState = copyLieState(&current_state, false, &Calibrate);
+  LieState newLieState = copyLieState(&current_state, false, &LogCalibration);
 
-  uint8_t i = LOG_LENGTH * (uint8_t)((current_time - current_state.stateStart) / (float) MEASURE_DURATION);
-  i = min(LOG_LENGTH, i);
-
-  newLieState.rr_delta_t_calibration[i] += respiratory_rate;
-  newLieState.hr_delta_t_calibration[i] += heart_rate;
-  newLieState.gs_delta_t_calibration[i] += galvanic_skin_response;
+  newLieState.rr_delta_t_calibration[newLieState.idx] += respiratory_rate;
+  newLieState.hr_delta_t_calibration[newLieState.idx] += heart_rate;
+  newLieState.gs_delta_t_calibration[newLieState.idx] += galvanic_skin_response;
+  newLieState.idx++;
 
   // If we have filled our delta_t logs, switch to report mode.
-  if (current_time >= (current_state.stateStart + MEASURE_DURATION)) {
+  if (newLieState.idx >= LOG_LENGTH) {
     newLieState.stateStart = current_time;
     newLieState.calibrationPoints = newLieState.calibrationPoints + 1;
 
-    newLieState.updateLS = &Idle;
+    newLieState.rr_baseline = 0;
+    newLieState.hr_baseline = 0;
+    newLieState.gs_baseline = 0;
 
+    for(unsigned int j = 0; j < LOG_LENGTH; j++) {
+      newLieState.rr_baseline += newLieState.rr_delta_t_calibration[j];
+      newLieState.hr_baseline += newLieState.hr_delta_t_calibration[j];
+      newLieState.gs_baseline += newLieState.gs_delta_t_calibration[j];
+    }
+
+    newLieState.rr_baseline = newLieState.rr_baseline / (LOG_LENGTH * newLieState.calibrationPoints);
+    newLieState.hr_baseline = newLieState.hr_baseline / (LOG_LENGTH * newLieState.calibrationPoints);
+    newLieState.gs_baseline = newLieState.gs_baseline / (LOG_LENGTH * newLieState.calibrationPoints);
+
+    newLieState.updateLS = &Idle;
     return newLieState;
   }
 
-  return current_state;
+  return newLieState;
 }
 
 LieState Reset(LieState current_state,
@@ -245,5 +264,5 @@ LieState Reset(LieState current_state,
                int galvanic_skin_response,
                unsigned long current_time) {
 
-  return LieState {{0}, {0}, {0}, {0}, {0}, {0}, 0, current_time, &Idle};
+  return LieState {{0}, {0}, {0}, {0}, {0}, {0}, 0, 0, 0, 0, 0, current_time, &Idle};
 }

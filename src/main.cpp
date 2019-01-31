@@ -41,6 +41,7 @@ unsigned long lastUpdate;
 
 // setup configures the underlying hardware for use in the main loop.
 void setup() {
+  //Serial.begin(9600);
   Bridge.begin();
 
   server.listenOnLocalhost();
@@ -54,7 +55,7 @@ void setup() {
   add_value(rr_sensor, analogRead(A1));
 
   rr_state = RRState{rr_sensor->smoothed_value, millis(), delta_t_breaths, 0, &Initial};
-  lie_state = LieState{{0}, {0}, {0}, {0}, {0}, {0}, 0, millis(), &Idle};
+  lie_state = LieState{{0}, {0}, {0}, {0}, {0}, {0}, 0, 0, 0, 0, 0, millis(), &Idle};
 
   lastUpdate = millis();
 }
@@ -93,9 +94,9 @@ void loop() {
   }
 
   if ((t - lastUpdate) > UPDATE_INTERVAL) {
-    transmit('h', heartRate);
-    transmit('g', gsr);
-    transmit('r', rr_state.bpm);
+    transmit('h', heartRate, lie_state.hr_baseline);
+    transmit('g', gsr, lie_state.gs_baseline);
+    transmit('r', rr_state.bpm, lie_state.rr_baseline);
 
     lastUpdate = t;
   }
