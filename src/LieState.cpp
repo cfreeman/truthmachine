@@ -182,7 +182,7 @@ LieState Report(LieState current_state,
 
   float lie_likely_hood = ((trendH + (2 * trendG)) / 3.0) - calibrate_trend;
   lie_likely_hood += (((avg_gs - current_state.gs_baseline) / 1024.0));
-  lie_likely_hood += (((avg_hr - current_state.hr_baseline) / 180.0));
+  lie_likely_hood += (((avg_hr - current_state.hr_baseline) / 120.0));
   lie_likely_hood = max(min(lie_likely_hood, 1.0), 0.0);
 
   transmit('l', (int) (lie_likely_hood * 100), 50);
