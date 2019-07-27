@@ -250,6 +250,8 @@ LieState LogCalibration(LieState current_state,
     newLieState.hr_baseline = newLieState.hr_baseline / (LOG_LENGTH * newLieState.calibrationPoints);
     newLieState.gs_baseline = newLieState.gs_baseline / (LOG_LENGTH * newLieState.calibrationPoints);
 
+    transmit('d', 0, 0);  // Notify the server that we have completed calibration.
+
     newLieState.updateLS = &Idle;
     return newLieState;
   }
