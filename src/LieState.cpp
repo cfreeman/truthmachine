@@ -206,6 +206,7 @@ LieState Calibrate(LieState current_state,
   }
 
   LieState newLieState = copyLieState(&current_state, false, &LogCalibration);
+  newLieState.stateStart = current_time;
   newLieState.idx = 0;
 
   return newLieState;

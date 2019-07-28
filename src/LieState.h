@@ -19,7 +19,7 @@
 #ifndef _LIE_STATE_C_ACH_
 #define _LIE_STATE_C_ACH_
 
-#define LOG_LENGTH 10            // The number of datapoints to collect for calculating lie likelyhood
+#define LOG_LENGTH 5            // The number of datapoints to collect for calculating lie likelyhood
 
 typedef struct LieStateStruct (*LieModeFn)(struct LieStateStruct current_state,
                                            char command,
