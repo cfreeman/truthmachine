@@ -24,10 +24,10 @@ SmoothedValues* new_smoothed(int size) {
 
   result->maxValues = size;
   result->numValues = 0;
-  result->values = (int*) calloc(size, sizeof(int));
+  result->values = (float*) calloc(size, sizeof(float));
   result->idx = 0;
-  result->sum = 0;
-  result->smoothed_value = 0;
+  result->sum = 0.0;
+  result->smoothed_value = 0.0;
 
   return result;
 }
@@ -37,15 +37,15 @@ void free_smoothed(SmoothedValues *sv) {
   free(sv);
 }
 
-void add_value(SmoothedValues *sv, int v) {
+void add_value(SmoothedValues *sv, float v) {
   sv->sum = sv->sum - sv->values[sv->idx] + v;
 
   sv->values[sv->idx] = v;
   sv->idx = (sv->idx + 1) % sv->maxValues;
 
-  if (sv->numValues <= sv->maxValues) {
+  if (sv->numValues < sv->maxValues) {
     sv->numValues++;
   }
 
-  sv->smoothed_value = sv->sum / sv->numValues;
+  sv->smoothed_value = sv->sum / (float) sv->numValues;
 }

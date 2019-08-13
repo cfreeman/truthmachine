@@ -22,15 +22,15 @@
 typedef struct Smoothed_struct {
   int maxValues;
   int numValues;
-  int *values;
+  float *values;
   int idx;
-  int sum;
+  float sum;
 
-  int smoothed_value;
+  float smoothed_value;
 } SmoothedValues;
 
 SmoothedValues* new_smoothed(int size);
 void free_smoothed(SmoothedValues *sv);
-void add_value(SmoothedValues *sv, int v);
+void add_value(SmoothedValues *sv, float v);
 
 #endif

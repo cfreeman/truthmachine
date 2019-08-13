@@ -19,33 +19,22 @@
 #include <Arduino.h>
 #include "RRState.h"
 
-RRState Initial(RRState current_state,
-                int chest_pos,
-                unsigned long current_time) {
-
-  if (current_time > (current_state.last_t + 2000)) {
-    int minima = min(chest_pos, current_state.last_chest_pos);
-
-    if (chest_pos > (minima + RRTHRESH)) {
-      return {minima, current_time, current_state.breaths, current_state.bpm, &BreatheOut};
-    } else {
-      return {minima, current_state.last_t, current_state.breaths, current_state.bpm, &Initial};
-    }
-  }
-
-  return current_state;
-}
-
 RRState BreatheIn(RRState current_state,
-                  int chest_pos,
+                  float chest_pos,
                   unsigned long current_time) {
 
   // chest_pos decreases as you breathe in.
-  int minima = min(chest_pos, current_state.last_chest_pos);
+  float minima = min(chest_pos, current_state.last_chest_pos);
 
-  if (chest_pos > (minima + RRTHRESH)) {
-    add_value(current_state.breaths, (int)(current_time - current_state.last_t));
-    current_state.bpm = max(0, (60000 / current_state.breaths->smoothed_value));
+  if ((current_state.last_chest_pos - chest_pos) < -RRTHRESH) {
+    float breath_length = ((current_time - current_state.last_t) / 1000.0);
+
+    add_value(current_state.breaths, breath_length);
+    current_state.bpm = (int) ceil((60.0 / current_state.breaths->smoothed_value));
+
+    //Serial.println("Switch to BreatheOut");
+    //Serial.print("BPM: ");
+    //Serial.println(current_state.bpm);
 
     return {minima, current_time, current_state.breaths, current_state.bpm, &BreatheOut};
   }
@@ -54,13 +43,14 @@ RRState BreatheIn(RRState current_state,
 }
 
 RRState BreatheOut(RRState current_state,
-                   int chest_pos,
+                   float chest_pos,
                    unsigned long current_time) {
 
   // chest_pos increases as you breathe out.
-  int maxima = max(chest_pos, current_state.last_chest_pos);
+  float maxima = max(chest_pos, current_state.last_chest_pos);
 
-  if (chest_pos < (maxima - RRTHRESH)) {
+  if ((current_state.last_chest_pos - chest_pos) > RRTHRESH) {
+    //Serial.println("Switch to BreathIn");
     return {maxima, current_state.last_t, current_state.breaths, current_state.bpm, &BreatheIn};
   }
 

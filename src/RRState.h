@@ -19,16 +19,16 @@
 #ifndef _RR_STATE_C_ACH_
 #define _RR_STATE_C_ACH_
 
-#define RRTHRESH 1
+#define RRTHRESH 2.5
 
 #include "SmoothedStruct.h"
 
 typedef struct RRStateStruct (*RRModeFn)(struct RRStateStruct current_state,
-                                         int chest_pos,
+                                         float chest_pos,
                                          unsigned long current_time);
 
 typedef struct RRStateStruct {
-  int last_chest_pos;       // The last maxima or minima chest position.
+  float last_chest_pos;       // The last maxima or minima chest position.
   unsigned long last_t;     // The last time we reached a max chest position.
   SmoothedValues *breaths;  // Bucket of the times taken for each of the last ten breaths.
   int bpm;                  // Current respiratory rate in breaths per minute.
@@ -36,21 +36,15 @@ typedef struct RRStateStruct {
   RRModeFn updateRR;
 } RRState;
 
-// The respiratory rate sensor starts in the Initial state and looks for when the participant
-// starts to breathe out.
-RRState Initial(RRState current_state,
-                int chest_pos,
-                unsigned long current_time);
-
 // The respiratory rate sensor enters the BreatheIn state when the participant inhales. Breaths
 // are measured from BreatheIn to the next.
 RRState BreatheIn(RRState current_state,
-                  int chest_pos,
+                  float chest_pos,
                   unsigned long current_time);
 
 // The respiratory rate sensor enters the BreatheOut state when the participant exhales.
 RRState BreatheOut(RRState current_state,
-                   int chest_pos,
+                   float chest_pos,
                    unsigned long current_time);
 
 #endif

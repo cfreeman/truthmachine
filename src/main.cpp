@@ -49,12 +49,12 @@ void setup() {
 
   Wire.begin();
 
-  rr_sensor = new_smoothed(10);       // Exists till hard recycle.
-  delta_t_breaths = new_smoothed(10); // Exists till hard recycle.
+  rr_sensor = new_smoothed(3);        // Exists till hard recycle.
+  delta_t_breaths = new_smoothed(5);  // Exists till hard recycle.
 
   add_value(rr_sensor, analogRead(A1));
 
-  rr_state = RRState{rr_sensor->smoothed_value, millis(), delta_t_breaths, 0, &Initial};
+  rr_state = RRState{rr_sensor->smoothed_value, millis(), delta_t_breaths, 0, &BreatheIn};
   lie_state = LieState{{0}, {0}, {0}, {0}, {0}, {0}, 0, 0, 0, 0, 0, millis(), &Idle};
 
   lastUpdate = millis();
@@ -84,14 +84,21 @@ void loop() {
 
   // Get the latest data from the Respiration Rate and Galvanic Skin Response Sensors.
   add_value(rr_sensor, analogRead(A1));
+
+  // Serial.print("A1: ");
+  // Serial.println(rr_sensor->smoothed_value);
+
   rr_state = rr_state.updateRR(rr_state, rr_sensor->smoothed_value, t);
 
   // Get the latest data from the Heart Rate Sensor and broadcast it to the server.
   int heartRate = 60;  // Default the heart rate to a fairly average resting rate.
   int b = Wire.requestFrom(0xA0 >> 1, 1);
   if (b > 0) {
+    //Serial.println("*");
     heartRate = (int) Wire.read();
   }
+  //Serial.print("HR: ");
+  //Serial.println(heartRate);
 
   if ((t - lastUpdate) > UPDATE_INTERVAL) {
     transmit('h', heartRate, lie_state.hr_baseline);
