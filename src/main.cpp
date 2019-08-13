@@ -49,7 +49,7 @@ void setup() {
 
   Wire.begin();
 
-  rr_sensor = new_smoothed(3);        // Exists till hard recycle.
+  rr_sensor = new_smoothed(10);        // Exists till hard recycle.
   delta_t_breaths = new_smoothed(5);  // Exists till hard recycle.
 
   add_value(rr_sensor, analogRead(A1));
@@ -80,25 +80,35 @@ char get_command() {
 // loop executes over and over on the microcontroller.
 void loop() {
   unsigned long t = millis();
-  int gsr = (1024 - analogRead(A0));
 
   // Get the latest data from the Respiration Rate and Galvanic Skin Response Sensors.
+  int gsr = (1024 - analogRead(A0));
+
+  // For higher fidelity, sample the respiratory sensor more often than everything else.
   add_value(rr_sensor, analogRead(A1));
+  rr_state = rr_state.updateRR(rr_state, rr_sensor->smoothed_value, t);
 
-  // Serial.print("A1: ");
-  // Serial.println(rr_sensor->smoothed_value);
+  delay(125);
 
+  add_value(rr_sensor, analogRead(A1));
+  rr_state = rr_state.updateRR(rr_state, rr_sensor->smoothed_value, t);
+
+  delay(125);
+
+  add_value(rr_sensor, analogRead(A1));
+  rr_state = rr_state.updateRR(rr_state, rr_sensor->smoothed_value, t);
+
+  delay(125);
+
+  add_value(rr_sensor, analogRead(A1));
   rr_state = rr_state.updateRR(rr_state, rr_sensor->smoothed_value, t);
 
   // Get the latest data from the Heart Rate Sensor and broadcast it to the server.
   int heartRate = 60;  // Default the heart rate to a fairly average resting rate.
   int b = Wire.requestFrom(0xA0 >> 1, 1);
   if (b > 0) {
-    //Serial.println("*");
     heartRate = (int) Wire.read();
   }
-  //Serial.print("HR: ");
-  //Serial.println(heartRate);
 
   if ((t - lastUpdate) > UPDATE_INTERVAL) {
     transmit('h', heartRate, lie_state.hr_baseline);
@@ -112,5 +122,5 @@ void loop() {
   char c = get_command();
   lie_state = lie_state.updateLS(lie_state, c, rr_state.bpm, heartRate, gsr, t);
 
-  delay(500);  // Give our microcontroller a little chill.
+  delay(125);  // Give our microcontroller a little chill.
 }

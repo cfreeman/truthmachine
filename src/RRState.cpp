@@ -32,10 +32,6 @@ RRState BreatheIn(RRState current_state,
     add_value(current_state.breaths, breath_length);
     current_state.bpm = (int) ceil((60.0 / current_state.breaths->smoothed_value));
 
-    //Serial.println("Switch to BreatheOut");
-    //Serial.print("BPM: ");
-    //Serial.println(current_state.bpm);
-
     return {minima, current_time, current_state.breaths, current_state.bpm, &BreatheOut};
   }
 
@@ -50,7 +46,6 @@ RRState BreatheOut(RRState current_state,
   float maxima = max(chest_pos, current_state.last_chest_pos);
 
   if ((current_state.last_chest_pos - chest_pos) > RRTHRESH) {
-    //Serial.println("Switch to BreathIn");
     return {maxima, current_state.last_t, current_state.breaths, current_state.bpm, &BreatheIn};
   }
 

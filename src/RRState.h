@@ -19,7 +19,7 @@
 #ifndef _RR_STATE_C_ACH_
 #define _RR_STATE_C_ACH_
 
-#define RRTHRESH 2.5
+#define RRTHRESH 0.85
 
 #include "SmoothedStruct.h"
 
